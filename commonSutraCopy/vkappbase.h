@@ -19,5 +19,8 @@ public:
 	void terminate();
 	virtual void prepare();
 	virtual void render();
+
+protected:
+	void initializeInstance(const char* appName);
 };
 
