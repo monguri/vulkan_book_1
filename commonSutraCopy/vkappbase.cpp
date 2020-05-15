@@ -8,6 +8,7 @@ VulkanAppBase::VulkanAppBase()
 void VulkanAppBase::intialize(GLFWwindow* window, const char* appName)
 {
 	initializeInstance(appName);
+	selectPhysicalDevice();
 }
 
 void VulkanAppBase::terminate()
@@ -62,6 +63,19 @@ void VulkanAppBase::initializeInstance(const char* appName)
 
 	VkResult result = vkCreateInstance(&ci, nullptr, &m_instance);
 	checkResult(result);
+}
+
+void VulkanAppBase::selectPhysicalDevice()
+{
+	uint32_t devCount = 0;
+	vkEnumeratePhysicalDevices(m_instance, &devCount, nullptr);
+	std::vector<VkPhysicalDevice> physDevs(devCount);
+	vkEnumeratePhysicalDevices(m_instance, &devCount, physDevs.data());
+
+	// 最初のデバイスを使用する
+	m_physDev = physDevs[0];
+	// メモリプロパティを用意しておく
+	vkGetPhysicalDeviceMemoryProperties(m_physDev, &m_physMemProps);
 }
 
 void VulkanAppBase::prepare()

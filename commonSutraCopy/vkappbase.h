@@ -23,7 +23,11 @@ public:
 protected:
 	static void checkResult(VkResult result);
 	void initializeInstance(const char* appName);
+	void selectPhysicalDevice();
 
 	VkInstance m_instance = nullptr;
+	VkPhysicalDevice m_physDev = nullptr;
+
+	VkPhysicalDeviceMemoryProperties m_physMemProps;
 };
 
