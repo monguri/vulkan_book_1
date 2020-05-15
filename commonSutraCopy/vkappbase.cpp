@@ -14,6 +14,14 @@ void VulkanAppBase::terminate()
 {
 }
 
+void VulkanAppBase::checkResult(VkResult result)
+{
+	if (result != VK_SUCCESS)
+	{
+		DebugBreak();
+	}
+}
+
 void VulkanAppBase::initializeInstance(const char* appName)
 {
 	VkApplicationInfo appInfo{};
@@ -40,6 +48,20 @@ void VulkanAppBase::initializeInstance(const char* appName)
 		}
 	}
 
+	VkInstanceCreateInfo ci{};
+	ci.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+	ci.enabledExtensionCount = uint32_t(extensions.size());
+	ci.ppEnabledExtensionNames = extensions.data();
+	ci.pApplicationInfo = &appInfo;
+#ifdef _DEBUG
+	// デバッグビルドでは検証レイヤーを有効化
+	const char* layers[] = { "VK_LAYER_LUNARG_standard_validation" };
+	ci.enabledLayerCount = 1;
+	ci.ppEnabledLayerNames = layers;
+#endif
+
+	VkResult result = vkCreateInstance(&ci, nullptr, &m_instance);
+	checkResult(result);
 }
 
 void VulkanAppBase::prepare()

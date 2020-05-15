@@ -21,6 +21,9 @@ public:
 	virtual void render();
 
 protected:
+	static void checkResult(VkResult result);
 	void initializeInstance(const char* appName);
+
+	VkInstance m_instance = nullptr;
 };
 
