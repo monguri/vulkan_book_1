@@ -9,6 +9,8 @@ void VulkanAppBase::intialize(GLFWwindow* window, const char* appName)
 {
 	initializeInstance(appName);
 	selectPhysicalDevice();
+	m_graphicsQueueIndex = searchGraphicsqueueIndex();
+	createDevice();
 }
 
 void VulkanAppBase::terminate()
@@ -32,7 +34,7 @@ void VulkanAppBase::initializeInstance(const char* appName)
 	appInfo.apiVersion = VK_API_VERSION_1_1;
 	appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
 
-	// 拡張情報の取得
+	// インスタンス拡張情報の取得
 	std::vector<const char*> extensions;
 	std::vector<VkExtensionProperties> props;
 	{
@@ -76,6 +78,64 @@ void VulkanAppBase::selectPhysicalDevice()
 	m_physDev = physDevs[0];
 	// メモリプロパティを用意しておく
 	vkGetPhysicalDeviceMemoryProperties(m_physDev, &m_physMemProps);
+}
+
+uint32_t VulkanAppBase::searchGraphicsqueueIndex()
+{
+	uint32_t propCount;
+	vkGetPhysicalDeviceQueueFamilyProperties(m_physDev, &propCount, nullptr);
+	std::vector<VkQueueFamilyProperties> props(propCount);
+	vkGetPhysicalDeviceQueueFamilyProperties(m_physDev, &propCount, props.data());
+
+	uint32_t graphicsQueue = 0;
+	for (uint32_t i = 0; i < propCount; ++i)
+	{
+		if (props[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
+		{
+			graphicsQueue = i;
+			break;
+		}
+	}
+
+	return graphicsQueue;
+}
+
+void VulkanAppBase::createDevice()
+{
+	const float defaultQueuePriority(1.0f);
+	VkDeviceQueueCreateInfo devQueueCI{};
+	devQueueCI.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+	devQueueCI.queueFamilyIndex = m_graphicsQueueIndex;
+	devQueueCI.queueCount = 1;
+	devQueueCI.pQueuePriorities = &defaultQueuePriority;
+
+
+	// デバイス拡張情報をここでも取得
+	std::vector<const char*> extensions;
+	std::vector<VkExtensionProperties> devExtProps;
+	{
+		uint32_t count = 0;
+		// 数だけ先に取得して配列サイズを確保しておく
+		vkEnumerateDeviceExtensionProperties(m_physDev, nullptr, &count, nullptr);
+		devExtProps.resize(count);
+		// 配列に取得
+		vkEnumerateDeviceExtensionProperties(m_physDev, nullptr, &count, devExtProps.data());
+
+		for (const VkExtensionProperties& v : devExtProps)
+		{
+			extensions.push_back(v.extensionName);
+		}
+	}
+
+	VkDeviceCreateInfo ci{};
+	ci.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+	ci.pQueueCreateInfos = &devQueueCI;
+	ci.queueCreateInfoCount = 1;
+	ci.ppEnabledExtensionNames = extensions.data();
+	ci.enabledExtensionCount = uint32_t(extensions.size());
+
+	VkResult result = vkCreateDevice(m_physDev, &ci, nullptr, &m_device);
+	checkResult(result);
 }
 
 void VulkanAppBase::prepare()

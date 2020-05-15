@@ -24,10 +24,15 @@ protected:
 	static void checkResult(VkResult result);
 	void initializeInstance(const char* appName);
 	void selectPhysicalDevice();
+	uint32_t searchGraphicsqueueIndex();
+	void createDevice();
+	
 
 	VkInstance m_instance = nullptr;
 	VkPhysicalDevice m_physDev = nullptr;
-
 	VkPhysicalDeviceMemoryProperties m_physMemProps;
+	uint32_t m_graphicsQueueIndex = ~0u;
+
+	VkDevice m_device = nullptr;
 };
 
