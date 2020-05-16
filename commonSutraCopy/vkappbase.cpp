@@ -67,6 +67,7 @@ void VulkanAppBase::intialize(GLFWwindow* window, const char* appName)
 
 	createRenderPass();
 	createFramebuffer();
+	prepareCommandBuffers();
 }
 
 void VulkanAppBase::terminate()
@@ -481,6 +482,19 @@ void VulkanAppBase::createFramebuffer()
 		checkResult(result);
 		m_framebuffers.push_back(framebuffer);
 	}
+}
+
+void VulkanAppBase::prepareCommandBuffers()
+{
+	VkCommandBufferAllocateInfo ai{};
+	ai.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	ai.commandPool = m_commandPool;
+	ai.commandBufferCount = uint32_t(m_swapchainViews.size());
+	ai.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+
+	m_commands.resize(ai.commandBufferCount);
+	VkResult result = vkAllocateCommandBuffers(m_device, &ai, m_commands.data());
+	checkResult(result);
 }
 
 void VulkanAppBase::prepare()

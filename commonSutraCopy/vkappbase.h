@@ -38,6 +38,7 @@ protected:
 	void createViews();
 	void createRenderPass();
 	void createFramebuffer();
+	void prepareCommandBuffers();
 
 	VkInstance m_instance = nullptr;
 	VkPhysicalDevice m_physDev = nullptr;
@@ -68,5 +69,7 @@ protected:
 	PFN_vkDebugReportMessageEXT m_vkDebugReportMessageEXT = nullptr;
 	PFN_vkDestroyDebugReportCallbackEXT m_vkDestroyDebugReportCallbackEXT = nullptr;
 	VkDebugReportCallbackEXT m_debugReport = nullptr;
+
+	std::vector<VkCommandBuffer> m_commands;
 };
 
