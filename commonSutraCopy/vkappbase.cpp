@@ -137,6 +137,8 @@ void VulkanAppBase::createDevice()
 
 	VkResult result = vkCreateDevice(m_physDev, &ci, nullptr, &m_device);
 	checkResult(result);
+
+	vkGetDeviceQueue(m_device, m_graphicsQueueIndex, 0, &m_deviceQueue);
 }
 
 void VulkanAppBase::prepareCommandPool()

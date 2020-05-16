@@ -35,6 +35,7 @@ protected:
 	uint32_t m_graphicsQueueIndex = ~0u;
 
 	VkDevice m_device = nullptr;
+	VkQueue m_deviceQueue = nullptr;
 	VkCommandPool m_commandPool = nullptr;
 };
 
