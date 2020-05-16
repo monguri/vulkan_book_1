@@ -34,6 +34,7 @@ protected:
 	uint32_t getMemoryTypeIndex(uint32_t requestBits, VkMemoryPropertyFlags requestProps) const;
 	void createDepthBuffer();
 	void createViews();
+	void createRenderPass();
 
 	VkInstance m_instance = nullptr;
 	VkPhysicalDevice m_physDev = nullptr;
@@ -55,5 +56,7 @@ protected:
 	VkImage m_depthBuffer = nullptr;
 	VkDeviceMemory m_depthBufferMemory = nullptr;
 	VkImageView m_depthBufferView;
+
+	VkRenderPass m_renderPass = nullptr;
 };
 
