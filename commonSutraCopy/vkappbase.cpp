@@ -33,7 +33,29 @@ void VulkanAppBase::intialize(GLFWwindow* window, const char* appName)
 
 void VulkanAppBase::terminate()
 {
+	vkDestroyRenderPass(m_device, m_renderPass, nullptr);
+	for (VkFramebuffer& v : m_framebuffers)
+	{
+		vkDestroyFramebuffer(m_device, v, nullptr);
+	}
+	m_framebuffers.clear();
+
 	vkFreeMemory(m_device, m_depthBufferMemory, nullptr);
+	vkDestroyImage(m_device, m_depthBuffer, nullptr);
+	vkDestroyImageView(m_device, m_depthBufferView, nullptr);
+
+	for (VkImageView& v : m_swapchainViews)
+	{
+		vkDestroyImageView(m_device, v, nullptr);
+	}
+
+	m_swapchainImages.clear(); // TODO:このVkImageは解放いらない？スワップチェインがもってるからスワップチェインと一緒に解放される？
+	vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
+
+	vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
+	vkDestroyDevice(m_device, nullptr);
+
+	vkDestroyInstance(m_instance, nullptr);
 }
 
 void VulkanAppBase::checkResult(VkResult result)
