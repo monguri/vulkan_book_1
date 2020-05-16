@@ -29,6 +29,8 @@ protected:
 	void prepareCommandPool();
 	void selectSurfaceFormat(VkFormat format);
 	void createSwapchain(GLFWwindow* window);
+	uint32_t getMemoryTypeIndex(uint32_t requestBits, VkMemoryPropertyFlags requestProps) const;
+	void createDepthBuffer();
 
 	VkInstance m_instance = nullptr;
 	VkPhysicalDevice m_physDev = nullptr;
@@ -43,5 +45,9 @@ protected:
 	VkSurfaceFormatKHR m_surfaceFormat;
 	VkSurfaceCapabilitiesKHR m_surfaceCaps;
 	VkSwapchainKHR m_swapchain = nullptr;
+	VkExtent2D m_swapchainExtent;
+
+	VkImage m_depthBuffer = nullptr;
+	VkDeviceMemory m_depthBufferMemory = nullptr;
 };
 

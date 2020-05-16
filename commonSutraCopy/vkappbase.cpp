@@ -210,6 +210,58 @@ void VulkanAppBase::createSwapchain(GLFWwindow* window)
 
 	VkResult result = vkCreateSwapchainKHR(m_device, &ci, nullptr, &m_swapchain);
 	checkResult(result);
+
+	m_swapchainExtent = extent;
+}
+
+uint32_t VulkanAppBase::getMemoryTypeIndex(uint32_t requestBits, VkMemoryPropertyFlags requestProps) const
+{
+	uint32_t result = ~0u;
+
+	for (uint32_t i = 0; i < m_physMemProps.memoryTypeCount; ++i)
+	{
+		if (requestBits & 1) // iŒ…‚Ìƒrƒbƒg‚ª1‚Ì‚Æ‚«‚¾‚¯”äŠr‚·‚é
+		{
+			const VkMemoryType& type = m_physMemProps.memoryTypes[i];
+			if ((type.propertyFlags & requestProps) == requestProps)
+			{
+				result = i;
+				break;
+			}
+			requestBits >>= 1;
+		}
+	}
+
+	return result;
+}
+
+void VulkanAppBase::createDepthBuffer()
+{
+	VkImageCreateInfo ci{};
+	ci.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+	ci.imageType = VK_IMAGE_TYPE_2D;
+	ci.format = VK_FORMAT_D32_SFLOAT;
+	ci.extent.width = m_swapchainExtent.width;
+	ci.extent.height = m_swapchainExtent.height;
+	ci.extent.depth = 1;
+	ci.mipLevels = 1;
+	ci.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+	ci.samples = VK_SAMPLE_COUNT_1_BIT;
+	ci.arrayLayers = 1;
+	VkResult result = vkCreateImage(m_device, &ci, nullptr, &m_depthBuffer);
+	checkResult(result);
+
+	VkMemoryRequirements reqs;
+	vkGetImageMemoryRequirements(m_device, m_depthBuffer, &reqs);
+
+	VkMemoryAllocateInfo ai{};
+	ai.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	ai.allocationSize = reqs.size;
+	ai.memoryTypeIndex = getMemoryTypeIndex(reqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	result = vkAllocateMemory(m_device, &ai, nullptr, &m_depthBufferMemory);
+	checkResult(result);
+	result = vkBindImageMemory(m_device, m_depthBuffer, m_depthBufferMemory, 0);
+	checkResult(result);
 }
 
 void VulkanAppBase::prepare()
