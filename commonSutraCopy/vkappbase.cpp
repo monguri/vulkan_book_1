@@ -11,6 +11,7 @@ void VulkanAppBase::intialize(GLFWwindow* window, const char* appName)
 	selectPhysicalDevice();
 	m_graphicsQueueIndex = searchGraphicsqueueIndex();
 	createDevice();
+	prepareCommandPool();
 }
 
 void VulkanAppBase::terminate()
@@ -135,6 +136,16 @@ void VulkanAppBase::createDevice()
 	ci.enabledExtensionCount = uint32_t(extensions.size());
 
 	VkResult result = vkCreateDevice(m_physDev, &ci, nullptr, &m_device);
+	checkResult(result);
+}
+
+void VulkanAppBase::prepareCommandPool()
+{
+	VkCommandPoolCreateInfo ci{};
+	ci.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	ci.queueFamilyIndex = m_graphicsQueueIndex;
+	ci.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+	VkResult result = vkCreateCommandPool(m_device, &ci, nullptr, &m_commandPool);
 	checkResult(result);
 }
 

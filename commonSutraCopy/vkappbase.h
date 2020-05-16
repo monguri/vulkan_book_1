@@ -26,6 +26,7 @@ protected:
 	void selectPhysicalDevice();
 	uint32_t searchGraphicsqueueIndex();
 	void createDevice();
+	void prepareCommandPool();
 	
 
 	VkInstance m_instance = nullptr;
@@ -34,5 +35,6 @@ protected:
 	uint32_t m_graphicsQueueIndex = ~0u;
 
 	VkDevice m_device = nullptr;
+	VkCommandPool m_commandPool = nullptr;
 };
 
