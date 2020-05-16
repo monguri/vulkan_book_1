@@ -1,5 +1,4 @@
 #include "vkappbase.h"
-#include <vector>
 #include <algorithm>
 
 VulkanAppBase::VulkanAppBase()
@@ -23,6 +22,9 @@ void VulkanAppBase::intialize(GLFWwindow* window, const char* appName)
 	checkResult(result);
 
 	createSwapchain(window);
+
+	createDepthBuffer();
+	createViews();
 }
 
 void VulkanAppBase::terminate()
@@ -228,8 +230,8 @@ uint32_t VulkanAppBase::getMemoryTypeIndex(uint32_t requestBits, VkMemoryPropert
 				result = i;
 				break;
 			}
-			requestBits >>= 1;
 		}
+		requestBits >>= 1;
 	}
 
 	return result;
@@ -262,6 +264,52 @@ void VulkanAppBase::createDepthBuffer()
 	checkResult(result);
 	result = vkBindImageMemory(m_device, m_depthBuffer, m_depthBufferMemory, 0);
 	checkResult(result);
+}
+
+void VulkanAppBase::createViews()
+{
+	// スワップチェインのもつカラーバッファ用のビュー作成
+	uint32_t imageCount;
+	vkGetSwapchainImagesKHR(m_device, m_swapchain, &imageCount, nullptr);
+	m_swapchainImages.resize(imageCount);
+	vkGetSwapchainImagesKHR(m_device, m_swapchain, &imageCount, m_swapchainImages.data());
+
+	m_swapchainViews.resize(imageCount);
+	for (uint32_t i = 0; i < imageCount; ++i)
+	{
+		VkImageViewCreateInfo ci{};
+		ci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		ci.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		ci.format = m_surfaceFormat.format;
+		ci.components = {
+			VK_COMPONENT_SWIZZLE_R,
+			VK_COMPONENT_SWIZZLE_G,
+			VK_COMPONENT_SWIZZLE_B,
+			VK_COMPONENT_SWIZZLE_A,
+		};
+		ci.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+		ci.image = m_swapchainImages[i];
+		VkResult result = vkCreateImageView(m_device, &ci, nullptr, &m_swapchainViews[i]);
+		checkResult(result);
+	}
+
+	// デプスバッファ用のビュー作成
+	{
+		VkImageViewCreateInfo ci{};
+		ci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		ci.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		ci.format = VK_FORMAT_D32_SFLOAT;
+		ci.components = {
+			VK_COMPONENT_SWIZZLE_R,
+			VK_COMPONENT_SWIZZLE_G,
+			VK_COMPONENT_SWIZZLE_B,
+			VK_COMPONENT_SWIZZLE_A,
+		};
+		ci.subresourceRange = { VK_IMAGE_ASPECT_DEPTH_BIT, 0, 1, 0, 1 };
+		ci.image = m_depthBuffer;
+		VkResult result = vkCreateImageView(m_device, &ci, nullptr, &m_depthBufferView);
+		checkResult(result);
+	}
 }
 
 void VulkanAppBase::prepare()

@@ -10,6 +10,8 @@
 #include <vulkan/vk_layer.h>
 #include <vulkan/vulkan_win32.h>
 
+#include <vector>
+
 class VulkanAppBase
 {
 public:
@@ -31,6 +33,7 @@ protected:
 	void createSwapchain(GLFWwindow* window);
 	uint32_t getMemoryTypeIndex(uint32_t requestBits, VkMemoryPropertyFlags requestProps) const;
 	void createDepthBuffer();
+	void createViews();
 
 	VkInstance m_instance = nullptr;
 	VkPhysicalDevice m_physDev = nullptr;
@@ -46,8 +49,11 @@ protected:
 	VkSurfaceCapabilitiesKHR m_surfaceCaps;
 	VkSwapchainKHR m_swapchain = nullptr;
 	VkExtent2D m_swapchainExtent;
+	std::vector<VkImage> m_swapchainImages;
+	std::vector<VkImageView> m_swapchainViews;
 
 	VkImage m_depthBuffer = nullptr;
 	VkDeviceMemory m_depthBufferMemory = nullptr;
+	VkImageView m_depthBufferView;
 };
 
