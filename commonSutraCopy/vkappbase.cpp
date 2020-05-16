@@ -1,5 +1,6 @@
 #include "vkappbase.h"
 #include <vector>
+#include <algorithm>
 
 VulkanAppBase::VulkanAppBase()
 {
@@ -17,6 +18,11 @@ void VulkanAppBase::intialize(GLFWwindow* window, const char* appName)
 	checkResult(result);
 
 	selectSurfaceFormat(VK_FORMAT_B8G8R8A8_UNORM);
+
+	result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_physDev, m_surface, &m_surfaceCaps);
+	checkResult(result);
+
+	createSwapchain(window);
 }
 
 void VulkanAppBase::terminate()
@@ -170,6 +176,40 @@ void VulkanAppBase::selectSurfaceFormat(VkFormat format)
 			m_surfaceFormat = f;
 		}
 	}
+}
+
+void VulkanAppBase::createSwapchain(GLFWwindow* window)
+{
+	uint32_t imageCount = (std::max)(2u, m_surfaceCaps.minImageCount); // windowsのmaxというdefineと間違えられないように()で囲んでいる
+	VkExtent2D& extent = m_surfaceCaps.currentExtent;
+	if (extent.width == ~0u)
+	{
+		// 値が無効なのでウィンドウサイズを使用する
+		int width, height;
+		glfwGetWindowSize(window, &width, &height);
+		extent.width = uint32_t(width);
+		extent.height = uint32_t(height);
+	}
+
+	VkSwapchainCreateInfoKHR ci{};
+	ci.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+	ci.surface = m_surface;
+	ci.minImageCount = imageCount;
+	ci.imageFormat = m_surfaceFormat.format;
+	ci.imageColorSpace = m_surfaceFormat.colorSpace;
+	ci.imageExtent = extent;
+	ci.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+	ci.preTransform = m_surfaceCaps.currentTransform;
+	ci.imageArrayLayers = 1;
+	ci.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+	ci.queueFamilyIndexCount = 0;
+	ci.presentMode = VK_PRESENT_MODE_FIFO_KHR;
+	ci.oldSwapchain = VK_NULL_HANDLE;
+	ci.clipped = VK_TRUE;
+	ci.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+
+	VkResult result = vkCreateSwapchainKHR(m_device, &ci, nullptr, &m_swapchain);
+	checkResult(result);
 }
 
 void VulkanAppBase::prepare()

@@ -28,6 +28,7 @@ protected:
 	void createDevice();
 	void prepareCommandPool();
 	void selectSurfaceFormat(VkFormat format);
+	void createSwapchain(GLFWwindow* window);
 
 	VkInstance m_instance = nullptr;
 	VkPhysicalDevice m_physDev = nullptr;
@@ -40,5 +41,7 @@ protected:
 
 	VkSurfaceKHR m_surface = nullptr;
 	VkSurfaceFormatKHR m_surfaceFormat;
+	VkSurfaceCapabilitiesKHR m_surfaceCaps;
+	VkSwapchainKHR m_swapchain = nullptr;
 };
 
