@@ -26,6 +26,8 @@ protected:
 	static void checkResult(VkResult result);
 	void initializeInstance(const char* appName);
 	void selectPhysicalDevice();
+	void enableDebugReport();
+	void disableDebugReport();
 	uint32_t searchGraphicsqueueIndex();
 	void createDevice();
 	void prepareCommandPool();
@@ -60,5 +62,11 @@ protected:
 
 	VkRenderPass m_renderPass = nullptr;
 	std::vector<VkFramebuffer> m_framebuffers;
+
+	// デバッグレポート関連::デバッグレポート関
+	PFN_vkCreateDebugReportCallbackEXT m_vkCreateDebugReportCallbackEXT = nullptr;
+	PFN_vkDebugReportMessageEXT m_vkDebugReportMessageEXT = nullptr;
+	PFN_vkDestroyDebugReportCallbackEXT m_vkDestroyDebugReportCallbackEXT = nullptr;
+	VkDebugReportCallbackEXT m_debugReport = nullptr;
 };
 

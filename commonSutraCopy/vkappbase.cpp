@@ -1,6 +1,39 @@
 #include "vkappbase.h"
+#include <sstream>
 #include <algorithm>
 #include <array>
+
+#define GetInstanceProcAddr(FuncName) \
+m_##FuncName = reinterpret_cast<PFN_##FuncName>(vkGetInstanceProcAddr(m_instance, #FuncName))
+
+static VkBool32 VKAPI_CALL DebugReportCallback(
+	VkDebugReportFlagsEXT flags,
+	VkDebugReportObjectTypeEXT objectType,
+	uint64_t object,
+	size_t location,
+	int32_t messageCode,
+	const char* pLayerPrefix,
+	const char* pMessage,
+	void* pUserData)
+{
+	VkBool32 ret = VK_FALSE;
+	if (flags & VK_DEBUG_REPORT_INFORMATION_BIT_EXT || flags & VK_DEBUG_REPORT_DEBUG_BIT_EXT)
+	{
+		ret = VK_TRUE;
+	}
+
+	std::stringstream ss;
+	if (pLayerPrefix)
+	{
+		ss << "[" << pLayerPrefix << "] ";
+	}
+	ss << pMessage << std::endl;
+
+	OutputDebugStringA(ss.str().c_str());
+
+	return ret;
+
+}
 
 VulkanAppBase::VulkanAppBase()
 {
@@ -10,6 +43,11 @@ void VulkanAppBase::intialize(GLFWwindow* window, const char* appName)
 {
 	initializeInstance(appName);
 	selectPhysicalDevice();
+
+#ifdef _DEBUG
+	enableDebugReport();
+#endif
+
 	m_graphicsQueueIndex = searchGraphicsqueueIndex();
 	createDevice();
 	prepareCommandPool();
@@ -54,6 +92,10 @@ void VulkanAppBase::terminate()
 
 	vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
 	vkDestroyDevice(m_device, nullptr);
+
+#ifdef _DEBUG
+	disableDebugReport();
+#endif
 
 	vkDestroyInstance(m_instance, nullptr);
 }
@@ -119,6 +161,30 @@ void VulkanAppBase::selectPhysicalDevice()
 	m_physDev = physDevs[0];
 	// メモリプロパティを用意しておく
 	vkGetPhysicalDeviceMemoryProperties(m_physDev, &m_physMemProps);
+}
+
+void VulkanAppBase::enableDebugReport()
+{
+	GetInstanceProcAddr(vkCreateDebugReportCallbackEXT);
+	GetInstanceProcAddr(vkDebugReportMessageEXT);
+	GetInstanceProcAddr(vkDestroyDebugReportCallbackEXT);
+
+	VkDebugReportFlagsEXT flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
+	VkDebugReportCallbackCreateInfoEXT drcCI{};
+	drcCI.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
+	drcCI.flags = flags;
+	drcCI.pfnCallback = &DebugReportCallback;
+
+	VkResult result = m_vkCreateDebugReportCallbackEXT(m_instance, &drcCI, nullptr, &m_debugReport);
+	checkResult(result);
+}
+
+void VulkanAppBase::disableDebugReport()
+{
+	if (m_vkDestroyDebugReportCallbackEXT != nullptr)
+	{
+		m_vkDestroyDebugReportCallbackEXT(m_instance, m_debugReport, nullptr);
+	}
 }
 
 uint32_t VulkanAppBase::searchGraphicsqueueIndex()
