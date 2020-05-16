@@ -35,6 +35,7 @@ protected:
 	void createDepthBuffer();
 	void createViews();
 	void createRenderPass();
+	void createFramebuffer();
 
 	VkInstance m_instance = nullptr;
 	VkPhysicalDevice m_physDev = nullptr;
@@ -58,5 +59,6 @@ protected:
 	VkImageView m_depthBufferView;
 
 	VkRenderPass m_renderPass = nullptr;
+	std::vector<VkFramebuffer> m_framebuffers;
 };
 

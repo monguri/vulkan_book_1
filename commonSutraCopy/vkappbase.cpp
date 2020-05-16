@@ -28,10 +28,12 @@ void VulkanAppBase::intialize(GLFWwindow* window, const char* appName)
 	createViews();
 
 	createRenderPass();
+	createFramebuffer();
 }
 
 void VulkanAppBase::terminate()
 {
+	vkFreeMemory(m_device, m_depthBufferMemory, nullptr);
 }
 
 void VulkanAppBase::checkResult(VkResult result)
@@ -364,6 +366,33 @@ void VulkanAppBase::createRenderPass()
 
 	VkResult result = vkCreateRenderPass(m_device, &ci, nullptr, &m_renderPass);
 	checkResult(result);
+}
+
+void VulkanAppBase::createFramebuffer()
+{
+	VkFramebufferCreateInfo ci{};
+	ci.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+	ci.renderPass = m_renderPass;
+	ci.width = m_swapchainExtent.width;
+	ci.height = m_swapchainExtent.height;
+	ci.layers = 1;
+	m_framebuffers.clear();
+
+	// 2枚作るフレームバッファはカラーがスワップチェインのビューのそれぞれで
+	// デプスステンシルは共通の1枚を使う
+	for (const VkImageView& v : m_swapchainViews)
+	{
+		std::array<VkImageView, 2> attachments;
+		ci.attachmentCount = uint32_t(attachments.size());
+		ci.pAttachments = attachments.data();
+		attachments[0] = v;
+		attachments[1] = m_depthBufferView;
+
+		VkFramebuffer framebuffer = nullptr;
+		VkResult result = vkCreateFramebuffer(m_device, &ci, nullptr, &framebuffer);
+		checkResult(result);
+		m_framebuffers.push_back(framebuffer);
+	}
 }
 
 void VulkanAppBase::prepare()
