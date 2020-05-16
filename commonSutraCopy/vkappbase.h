@@ -27,7 +27,7 @@ protected:
 	uint32_t searchGraphicsqueueIndex();
 	void createDevice();
 	void prepareCommandPool();
-	
+	void selectSurfaceFormat(VkFormat format);
 
 	VkInstance m_instance = nullptr;
 	VkPhysicalDevice m_physDev = nullptr;
@@ -37,5 +37,8 @@ protected:
 	VkDevice m_device = nullptr;
 	VkQueue m_deviceQueue = nullptr;
 	VkCommandPool m_commandPool = nullptr;
+
+	VkSurfaceKHR m_surface = nullptr;
+	VkSurfaceFormatKHR m_surfaceFormat;
 };
 
