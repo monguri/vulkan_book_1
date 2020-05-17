@@ -15,11 +15,9 @@
 class VulkanAppBase
 {
 public:
-	VulkanAppBase();
 	virtual ~VulkanAppBase() {}
 	void intialize(GLFWwindow* window, const char* appName);
 	void terminate();
-	virtual void prepare();
 	virtual void render();
 
 protected:

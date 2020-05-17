@@ -35,10 +35,6 @@ static VkBool32 VKAPI_CALL DebugReportCallback(
 
 }
 
-VulkanAppBase::VulkanAppBase()
-{
-}
-
 void VulkanAppBase::intialize(GLFWwindow* window, const char* appName)
 {
 	initializeInstance(appName);
@@ -73,6 +69,12 @@ void VulkanAppBase::intialize(GLFWwindow* window, const char* appName)
 
 void VulkanAppBase::terminate()
 {
+	// TODO:これはなぜ必要？
+	vkDeviceWaitIdle(m_device);
+
+	vkFreeCommandBuffers(m_device, m_commandPool, uint32_t(m_commands.size()), m_commands.data());
+	m_commands.clear();
+
 	vkDestroyRenderPass(m_device, m_renderPass, nullptr);
 	for (VkFramebuffer& v : m_framebuffers)
 	{
@@ -91,6 +93,16 @@ void VulkanAppBase::terminate()
 
 	m_swapchainImages.clear(); // TODO:このVkImageは解放いらない？スワップチェインがもってるからスワップチェインと一緒に解放される？
 	vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
+
+	for (VkFence& v : m_fences)
+	{
+		vkDestroyFence(m_device, v, nullptr);
+	}
+	m_fences.clear();
+	vkDestroySemaphore(m_device, m_presentCompletedSem, nullptr);
+	vkDestroySemaphore(m_device, m_renderCompletedSem, nullptr);
+
+	vkDestroyCommandPool(m_device, m_commandPool, nullptr);
 
 	vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
 	vkDestroyDevice(m_device, nullptr);
@@ -518,10 +530,6 @@ void VulkanAppBase::prepareSemaphores()
 	checkResult(result);
 	result = vkCreateSemaphore(m_device, &ci, nullptr, &m_presentCompletedSem);
 	checkResult(result);
-}
-
-void VulkanAppBase::prepare()
-{
 }
 
 void VulkanAppBase::render()
