@@ -1,4 +1,5 @@
 #include "TriangleApp.h"
+#include <array>
 
 using namespace glm;
 
@@ -43,6 +44,43 @@ void TriangleApp::prepare()
 		memcpy(p, indices, sizeof(indices));
 		vkUnmapMemory(m_device, m_indexBuffer.memory);
 	}
+
+	// 頂点の入力の設定
+	VkVertexInputBindingDescription inputBinding{
+		0, // binding
+		sizeof(Vertex), // stride
+		VK_VERTEX_INPUT_RATE_VERTEX // inputRate
+	};
+
+	std::array<VkVertexInputAttributeDescription, 2> inputAttribs{
+		{
+			{0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, pos)},
+			{1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, color)},
+		}
+	};
+
+	VkPipelineVertexInputStateCreateInfo vertexInputCI{};
+	vertexInputCI.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+	vertexInputCI.vertexBindingDescriptionCount = 1;
+	vertexInputCI.pVertexBindingDescriptions = &inputBinding;
+	vertexInputCI.vertexAttributeDescriptionCount = 1;
+	vertexInputCI.pVertexAttributeDescriptions = inputAttribs.data();
+
+	// ブレンディングの設定
+	const int32_t colorWriteAll = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+	VkPipelineColorBlendAttachmentState blendAttachment{};
+	blendAttachment.blendEnable = VK_TRUE;
+	blendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+	blendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
+	blendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+	blendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+	blendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+	blendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+	blendAttachment.colorWriteMask = colorWriteAll;
+	VkPipelineColorBlendStateCreateInfo cbCI{};
+	cbCI.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+	cbCI.attachmentCount = 1;
+	cbCI.pAttachments = &blendAttachment;
 }
 
 void TriangleApp::cleanup()
