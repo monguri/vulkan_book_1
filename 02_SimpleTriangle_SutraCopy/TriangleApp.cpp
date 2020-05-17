@@ -104,6 +104,34 @@ void TriangleApp::prepare()
 	viewportCI.pViewports = &viewport;
 	viewportCI.scissorCount = 1;
 	viewportCI.pScissors = &scissor;
+
+	// プリミティブトポロジーの設定
+	VkPipelineInputAssemblyStateCreateInfo inputAssemblyCI{};
+	inputAssemblyCI.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+	inputAssemblyCI.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+
+	// ラスタライザーステート設定
+	VkPipelineRasterizationStateCreateInfo rasterizerCI{};
+	rasterizerCI.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+	rasterizerCI.polygonMode = VK_POLYGON_MODE_FILL;
+	rasterizerCI.cullMode = VK_CULL_MODE_NONE;
+	rasterizerCI.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+	rasterizerCI.lineWidth = 1.0f;
+
+	// マルチサンプル設定
+	VkPipelineMultisampleStateCreateInfo multisampleCI{};
+	multisampleCI.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+	multisampleCI.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+	
+	// デプスステンシルステート設定
+	VkPipelineDepthStencilStateCreateInfo depthStencilCI{};
+	depthStencilCI.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+	depthStencilCI.depthTestEnable = VK_TRUE;
+	depthStencilCI.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+	depthStencilCI.depthWriteEnable = VK_TRUE;
+	depthStencilCI.stencilTestEnable = VK_FALSE;
+
+
 }
 
 void TriangleApp::cleanup()
