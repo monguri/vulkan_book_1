@@ -41,38 +41,38 @@ protected:
 	void prepareCommandBuffers();
 	void prepareSemaphores();
 
-	VkInstance m_instance = nullptr;
-	VkPhysicalDevice m_physDev = nullptr;
+	VkInstance m_instance = VK_NULL_HANDLE;
+	VkPhysicalDevice m_physDev = VK_NULL_HANDLE;
 	VkPhysicalDeviceMemoryProperties m_physMemProps;
 	uint32_t m_graphicsQueueIndex = ~0u;
 
-	VkDevice m_device = nullptr;
-	VkQueue m_deviceQueue = nullptr;
-	VkCommandPool m_commandPool = nullptr;
+	VkDevice m_device = VK_NULL_HANDLE;
+	VkQueue m_deviceQueue = VK_NULL_HANDLE;
+	VkCommandPool m_commandPool = VK_NULL_HANDLE;
 
-	VkSurfaceKHR m_surface = nullptr;
+	VkSurfaceKHR m_surface = VK_NULL_HANDLE;
 	VkSurfaceFormatKHR m_surfaceFormat;
 	VkSurfaceCapabilitiesKHR m_surfaceCaps;
-	VkSwapchainKHR m_swapchain = nullptr;
+	VkSwapchainKHR m_swapchain = VK_NULL_HANDLE;
 	VkExtent2D m_swapchainExtent;
 	std::vector<VkImage> m_swapchainImages;
 	std::vector<VkImageView> m_swapchainViews;
 
-	VkImage m_depthBuffer = nullptr;
-	VkDeviceMemory m_depthBufferMemory = nullptr;
+	VkImage m_depthBuffer = VK_NULL_HANDLE;
+	VkDeviceMemory m_depthBufferMemory = VK_NULL_HANDLE;
 	VkImageView m_depthBufferView;
 
-	VkRenderPass m_renderPass = nullptr;
+	VkRenderPass m_renderPass = VK_NULL_HANDLE;
 	std::vector<VkFramebuffer> m_framebuffers;
 
 	// デバッグレポート関連::デバッグレポート関
-	PFN_vkCreateDebugReportCallbackEXT m_vkCreateDebugReportCallbackEXT = nullptr;
-	PFN_vkDebugReportMessageEXT m_vkDebugReportMessageEXT = nullptr;
-	PFN_vkDestroyDebugReportCallbackEXT m_vkDestroyDebugReportCallbackEXT = nullptr;
-	VkDebugReportCallbackEXT m_debugReport = nullptr;
+	PFN_vkCreateDebugReportCallbackEXT m_vkCreateDebugReportCallbackEXT = VK_NULL_HANDLE;
+	PFN_vkDebugReportMessageEXT m_vkDebugReportMessageEXT = VK_NULL_HANDLE;
+	PFN_vkDestroyDebugReportCallbackEXT m_vkDestroyDebugReportCallbackEXT = VK_NULL_HANDLE;
+	VkDebugReportCallbackEXT m_debugReport = VK_NULL_HANDLE;
 
 	std::vector<VkCommandBuffer> m_commands;
 	std::vector<VkFence> m_fences;
-	VkSemaphore m_renderCompletedSem, m_presentCompletedSem = nullptr;
+	VkSemaphore m_renderCompletedSem, m_presentCompletedSem = VK_NULL_HANDLE;
 };
 
