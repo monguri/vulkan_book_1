@@ -22,5 +22,7 @@ private:
 
 	BufferObject m_vertexBuffer;
 	BufferObject m_indexBuffer;
+
+	VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
 };
 

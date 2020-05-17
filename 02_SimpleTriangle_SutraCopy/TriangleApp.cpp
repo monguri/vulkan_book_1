@@ -139,6 +139,22 @@ void TriangleApp::prepare()
 		loadShaderModule("shader.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT),
 	};
 
+	// パイプラインレイアウト
+	VkPipelineLayoutCreateInfo pipelineLayoutCI{};
+	pipelineLayoutCI.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	VkResult result = vkCreatePipelineLayout(m_device, &pipelineLayoutCI, nullptr, &m_pipelineLayout);
+	checkResult(result);
+
+	// パイプライン構築
+	VkGraphicsPipelineCreateInfo ci{};
+	ci.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+	ci.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+	ci.stageCount = uint32_t(shaderStages.size());
+	ci.pStages = shaderStages.data();
+	ci.pInputAssemblyState = &inputAssemblyCI;
+	ci.pVertexInputState = &vertexInputCI;
+	ci.pRasterizationState = &rasterizerCI;
+	ci.pDepthStencilState = &depthStencilCI;
 
 }
 
