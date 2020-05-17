@@ -68,6 +68,7 @@ void VulkanAppBase::intialize(GLFWwindow* window, const char* appName)
 	createRenderPass();
 	createFramebuffer();
 	prepareCommandBuffers();
+	prepareSemaphores();
 }
 
 void VulkanAppBase::terminate()
@@ -507,6 +508,16 @@ void VulkanAppBase::prepareCommandBuffers()
 		result = vkCreateFence(m_device, &ci, nullptr, &v);
 		checkResult(result);
 	}
+}
+
+void VulkanAppBase::prepareSemaphores()
+{
+	VkSemaphoreCreateInfo ci{};
+	ci.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+	VkResult result = vkCreateSemaphore(m_device, &ci, nullptr, &m_renderCompletedSem);
+	checkResult(result);
+	result = vkCreateSemaphore(m_device, &ci, nullptr, &m_presentCompletedSem);
+	checkResult(result);
 }
 
 void VulkanAppBase::prepare()

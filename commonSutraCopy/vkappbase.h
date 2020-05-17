@@ -39,6 +39,7 @@ protected:
 	void createRenderPass();
 	void createFramebuffer();
 	void prepareCommandBuffers();
+	void prepareSemaphores();
 
 	VkInstance m_instance = nullptr;
 	VkPhysicalDevice m_physDev = nullptr;
@@ -72,5 +73,6 @@ protected:
 
 	std::vector<VkCommandBuffer> m_commands;
 	std::vector<VkFence> m_fences;
+	VkSemaphore m_renderCompletedSem, m_presentCompletedSem = nullptr;
 };
 
