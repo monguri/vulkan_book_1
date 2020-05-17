@@ -35,7 +35,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="shader.flag" />
     <None Include="shader.vert" />
+    <None Include="shader.frag" />
   </ItemGroup>
 </Project>
