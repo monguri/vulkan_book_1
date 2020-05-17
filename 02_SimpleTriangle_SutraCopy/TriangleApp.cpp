@@ -4,6 +4,7 @@ using namespace glm;
 
 void TriangleApp::prepare()
 {
+	// 頂点バッファ、インデックスバッファ作成
 	struct Vertex
 	{
 		glm::vec3 pos;
@@ -25,6 +26,23 @@ void TriangleApp::prepare()
 	m_vertexBuffer = createBuffer(sizeof(vertices), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
 	m_indexBuffer = createBuffer(sizeof(indices), VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
 
+	// 頂点データ書き込み
+	{
+		void* p = nullptr;
+		VkResult result = vkMapMemory(m_device, m_vertexBuffer.memory, 0, VK_WHOLE_SIZE, 0, &p);
+		checkResult(result);
+		memcpy(p, vertices, sizeof(vertices));
+		vkUnmapMemory(m_device, m_vertexBuffer.memory);
+	}
+
+	// インデックスデータ書き込み
+	{
+		void* p = nullptr;
+		VkResult result = vkMapMemory(m_device, m_indexBuffer.memory, 0, VK_WHOLE_SIZE, 0, &p);
+		checkResult(result);
+		memcpy(p, indices, sizeof(indices));
+		vkUnmapMemory(m_device, m_indexBuffer.memory);
+	}
 }
 
 void TriangleApp::cleanup()
