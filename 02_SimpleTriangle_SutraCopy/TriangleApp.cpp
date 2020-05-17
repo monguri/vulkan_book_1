@@ -81,6 +81,29 @@ void TriangleApp::prepare()
 	cbCI.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
 	cbCI.attachmentCount = 1;
 	cbCI.pAttachments = &blendAttachment;
+
+	// ビューポートの設定
+	VkViewport viewport;
+	{
+		viewport.x = 0.0f;
+		viewport.y = float(m_swapchainExtent.height);
+		viewport.width = float(m_swapchainExtent.width);
+		viewport.height = -1.0f * float(m_swapchainExtent.height);
+		viewport.minDepth = 0.0f;
+		viewport.minDepth = 1.0f;
+	}
+
+	VkRect2D scissor = {
+		{0, 0}, // offset
+		m_swapchainExtent
+	};
+
+	VkPipelineViewportStateCreateInfo viewportCI{};
+	viewportCI.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+	viewportCI.viewportCount = 1;
+	viewportCI.pViewports = &viewport;
+	viewportCI.scissorCount = 1;
+	viewportCI.pScissors = &scissor;
 }
 
 void TriangleApp::cleanup()
