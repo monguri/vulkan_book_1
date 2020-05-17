@@ -526,5 +526,23 @@ void VulkanAppBase::prepare()
 
 void VulkanAppBase::render()
 {
+	// •`‰ææ‚Ìæ“¾
+	uint32_t nextImageIndex = 0;
+	VkResult result = vkAcquireNextImageKHR(m_device, m_swapchain, UINT64_MAX, m_presentCompletedSem, VK_NULL_HANDLE, &nextImageIndex);
+	checkResult(result);
+
+	const VkFence& commandFence = m_fences[nextImageIndex];
+	result = vkWaitForFences(m_device, 1, &commandFence, VK_TRUE, UINT64_MAX);
+	checkResult(result);
+
+	// Present(ƒtƒŠƒbƒv)ˆ—
+	VkPresentInfoKHR presentInfo{};
+	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+	presentInfo.swapchainCount = 1;
+	presentInfo.pSwapchains = &m_swapchain;
+	presentInfo.pImageIndices = &nextImageIndex;
+	presentInfo.waitSemaphoreCount = 1;
+	presentInfo.pWaitSemaphores = &m_renderCompletedSem;
+	vkQueuePresentKHR(m_deviceQueue, &presentInfo);
 }
 
