@@ -71,5 +71,6 @@ protected:
 	VkDebugReportCallbackEXT m_debugReport = nullptr;
 
 	std::vector<VkCommandBuffer> m_commands;
+	std::vector<VkFence> m_fences;
 };
 

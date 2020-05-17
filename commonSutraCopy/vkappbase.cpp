@@ -495,6 +495,18 @@ void VulkanAppBase::prepareCommandBuffers()
 	m_commands.resize(ai.commandBufferCount);
 	VkResult result = vkAllocateCommandBuffers(m_device, &ai, m_commands.data());
 	checkResult(result);
+
+	// コマンドバッファと同数のフェンスを用意する
+	m_fences.resize(ai.commandBufferCount);
+	VkFenceCreateInfo ci{};
+	ci.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+	ci.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+	for (VkFence& v : m_fences)
+	{
+		result = vkCreateFence(m_device, &ci, nullptr, &v);
+		checkResult(result);
+	}
 }
 
 void VulkanAppBase::prepare()
