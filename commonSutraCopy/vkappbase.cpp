@@ -65,12 +65,18 @@ void VulkanAppBase::intialize(GLFWwindow* window, const char* appName)
 	createFramebuffer();
 	prepareCommandBuffers();
 	prepareSemaphores();
+
+	// VulkanAppBaseを継承したクラスごとの初期化処理
+	prepare();
 }
 
 void VulkanAppBase::terminate()
 {
 	// TODO:これはなぜ必要？
 	vkDeviceWaitIdle(m_device);
+
+	// VulkanAppBaseを継承したクラスごとの解放処理
+	cleanup();
 
 	vkFreeCommandBuffers(m_device, m_commandPool, uint32_t(m_commands.size()), m_commands.data());
 	m_commands.clear();
@@ -568,6 +574,9 @@ void VulkanAppBase::render()
 	result = vkBeginCommandBuffer(command, &commandBI);
 	checkResult(result);
 	vkCmdBeginRenderPass(command, &renderPassBI, VK_SUBPASS_CONTENTS_INLINE);
+
+	// VulkanAppBaseを継承したクラスごとのコマンド格納処理
+	makeCommand(command);
 
 	// レンダーパス終了、コマンドバッファへのコマンド格納終了
 	vkCmdEndRenderPass(command);

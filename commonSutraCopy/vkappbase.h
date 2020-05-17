@@ -19,8 +19,12 @@ public:
 	void intialize(GLFWwindow* window, const char* appName);
 	void terminate();
 	virtual void render();
-
+	
 protected:
+	virtual void prepare() {}
+	virtual void cleanup() {}
+	virtual void makeCommand(VkCommandBuffer command) {}
+
 	static void checkResult(VkResult result);
 	void initializeInstance(const char* appName);
 	void selectPhysicalDevice();
