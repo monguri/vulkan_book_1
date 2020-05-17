@@ -149,9 +149,11 @@
   <ItemGroup>
     <ClCompile Include="..\commonSutraCopy\vkappbase.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="TriangleApp.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\commonSutraCopy\vkappbase.h" />
+    <ClInclude Include="TriangleApp.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
