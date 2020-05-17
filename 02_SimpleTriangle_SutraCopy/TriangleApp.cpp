@@ -1,5 +1,6 @@
 #include "TriangleApp.h"
 #include <array>
+#include <fstream>
 
 using namespace glm;
 
@@ -131,6 +132,13 @@ void TriangleApp::prepare()
 	depthStencilCI.depthWriteEnable = VK_TRUE;
 	depthStencilCI.stencilTestEnable = VK_FALSE;
 
+	// シェーダバイナリのロード
+	std::vector<VkPipelineShaderStageCreateInfo> shaderStages
+	{
+		loadShaderModule("shader.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
+		loadShaderModule("shader.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT),
+	};
+
 
 }
 
@@ -168,3 +176,35 @@ TriangleApp::BufferObject TriangleApp::createBuffer(uint32_t size, VkBufferUsage
 
 	return obj;
 }
+
+VkPipelineShaderStageCreateInfo TriangleApp::loadShaderModule(const char* fileName, VkShaderStageFlagBits stage)
+{
+	std::ifstream infile(fileName, std::ios::binary);
+	if (!infile)
+	{
+		OutputDebugStringA("file not found.\n");
+		DebugBreak();
+	}
+
+	std::vector<char> filedata;
+	filedata.resize(uint32_t(infile.seekg(0, std::ifstream::end).tellg()));
+	infile.seekg(0, std::ifstream::beg).read(filedata.data(), filedata.size());
+
+	VkShaderModuleCreateInfo ci{};
+	ci.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+	ci.pCode = reinterpret_cast<uint32_t*>(filedata.data());
+	ci.codeSize = filedata.size();
+
+	VkShaderModule shaderModule;
+	VkResult result = vkCreateShaderModule(m_device, &ci, nullptr, &shaderModule);
+	checkResult(result);
+
+	VkPipelineShaderStageCreateInfo shaderStageCI{};
+	shaderStageCI.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	shaderStageCI.stage = stage;
+	shaderStageCI.module = shaderModule;
+	shaderStageCI.pName = "main";
+
+	return shaderStageCI;
+}
+

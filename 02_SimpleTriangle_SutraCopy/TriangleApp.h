@@ -18,6 +18,7 @@ private:
 	};
 
 	BufferObject createBuffer(uint32_t size, VkBufferUsageFlags usage);
+	VkPipelineShaderStageCreateInfo loadShaderModule(const char* fileName, VkShaderStageFlagBits stage);
 
 	BufferObject m_vertexBuffer;
 	BufferObject m_indexBuffer;
