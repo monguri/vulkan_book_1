@@ -45,6 +45,7 @@ void TriangleApp::prepare()
 		memcpy(p, indices, sizeof(indices));
 		vkUnmapMemory(m_device, m_indexBuffer.memory);
 	}
+	m_indexCount = _countof(indices);
 
 	// 頂点の入力の設定
 	VkVertexInputBindingDescription inputBinding{
@@ -64,7 +65,7 @@ void TriangleApp::prepare()
 	vertexInputCI.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 	vertexInputCI.vertexBindingDescriptionCount = 1;
 	vertexInputCI.pVertexBindingDescriptions = &inputBinding;
-	vertexInputCI.vertexAttributeDescriptionCount = 1;
+	vertexInputCI.vertexAttributeDescriptionCount = uint32_t(inputAttribs.size());
 	vertexInputCI.pVertexAttributeDescriptions = inputAttribs.data();
 
 	// ブレンディングの設定
@@ -175,6 +176,13 @@ void TriangleApp::cleanup()
 
 void TriangleApp::makeCommand(VkCommandBuffer command)
 {
+	vkCmdBindPipeline(command, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
+
+	VkDeviceSize offset = 0;
+	vkCmdBindVertexBuffers(command, 0, 1, &m_vertexBuffer.buffer, &offset);
+	vkCmdBindIndexBuffer(command, m_indexBuffer.buffer, offset, VK_INDEX_TYPE_UINT32);
+
+	vkCmdDrawIndexed(command, m_indexCount, 1, 0, 0, 0);
 }
 
 TriangleApp::BufferObject TriangleApp::createBuffer(uint32_t size, VkBufferUsageFlags usage)

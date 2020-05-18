@@ -25,5 +25,6 @@ private:
 
 	VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
 	VkPipeline m_pipeline = VK_NULL_HANDLE;
+	uint32_t m_indexCount = 0;
 };
 
