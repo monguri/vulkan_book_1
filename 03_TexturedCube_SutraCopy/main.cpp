@@ -1,4 +1,4 @@
-#include "TriangleApp.h"
+#include "CubeApp.h"
 
 #pragma comment(lib, "vulkan-1.lib")
 
@@ -15,7 +15,7 @@ int _stdcall wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 	glfwWindowHint(GLFW_RESIZABLE, 0);
 	GLFWwindow* window = glfwCreateWindow(WindowWidth, WindowHeight, AppTile, nullptr, nullptr);
 
-	TriangleApp theApp;
+	CubeApp theApp;
 	theApp.intialize(window, AppTile);
 
 	while (glfwWindowShouldClose(window) == GLFW_FALSE)

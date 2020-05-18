@@ -1,10 +1,10 @@
-#include "TriangleApp.h"
+#include "CubeApp.h"
 #include <array>
 #include <fstream>
 
 using namespace glm;
 
-void TriangleApp::prepare()
+void CubeApp::prepare()
 {
 	// 頂点バッファ、インデックスバッファ作成
 	struct Vertex
@@ -170,7 +170,7 @@ void TriangleApp::prepare()
 	}
 }
 
-void TriangleApp::cleanup()
+void CubeApp::cleanup()
 {
 	vkDestroyPipelineLayout(m_device, m_pipelineLayout, nullptr);
 	vkDestroyPipeline(m_device, m_pipeline, nullptr);
@@ -180,7 +180,7 @@ void TriangleApp::cleanup()
 	vkDestroyBuffer(m_device, m_indexBuffer.buffer, nullptr);
 }
 
-void TriangleApp::makeCommand(VkCommandBuffer command)
+void CubeApp::makeCommand(VkCommandBuffer command)
 {
 	vkCmdBindPipeline(command, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
 
@@ -191,7 +191,7 @@ void TriangleApp::makeCommand(VkCommandBuffer command)
 	vkCmdDrawIndexed(command, m_indexCount, 1, 0, 0, 0);
 }
 
-TriangleApp::BufferObject TriangleApp::createBuffer(uint32_t size, VkBufferUsageFlags usage)
+CubeApp::BufferObject CubeApp::createBuffer(uint32_t size, VkBufferUsageFlags usage)
 {
 	BufferObject obj;
 
@@ -218,7 +218,7 @@ TriangleApp::BufferObject TriangleApp::createBuffer(uint32_t size, VkBufferUsage
 	return obj;
 }
 
-VkPipelineShaderStageCreateInfo TriangleApp::loadShaderModule(const char* fileName, VkShaderStageFlagBits stage)
+VkPipelineShaderStageCreateInfo CubeApp::loadShaderModule(const char* fileName, VkShaderStageFlagBits stage)
 {
 	std::ifstream infile(fileName, std::ios::binary);
 	if (!infile)

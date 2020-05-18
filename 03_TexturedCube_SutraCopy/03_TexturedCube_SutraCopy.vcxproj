@@ -149,7 +149,7 @@
   <ItemGroup>
     <ClCompile Include="..\commonSutraCopy\vkappbase.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="TriangleApp.cpp" />
+    <ClCompile Include="CubeApp.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -158,7 +158,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\commonSutraCopy\vkappbase.h" />
-    <ClInclude Include="TriangleApp.h" />
+    <ClInclude Include="CubeApp.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

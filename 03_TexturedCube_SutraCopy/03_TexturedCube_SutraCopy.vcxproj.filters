@@ -18,10 +18,10 @@
     <ClCompile Include="main.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="TriangleApp.cpp">
+    <ClCompile Include="..\commonSutraCopy\vkappbase.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="..\commonSutraCopy\vkappbase.cpp">
+    <ClCompile Include="CubeApp.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
@@ -31,10 +31,10 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="TriangleApp.h">
+    <ClInclude Include="..\commonSutraCopy\vkappbase.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="..\commonSutraCopy\vkappbase.h">
+    <ClInclude Include="CubeApp.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
