@@ -24,5 +24,6 @@ private:
 	BufferObject m_indexBuffer;
 
 	VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
+	VkPipeline m_pipeline = VK_NULL_HANDLE;
 };
 

@@ -148,14 +148,25 @@ void TriangleApp::prepare()
 	// パイプライン構築
 	VkGraphicsPipelineCreateInfo ci{};
 	ci.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-	ci.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 	ci.stageCount = uint32_t(shaderStages.size());
 	ci.pStages = shaderStages.data();
 	ci.pInputAssemblyState = &inputAssemblyCI;
 	ci.pVertexInputState = &vertexInputCI;
 	ci.pRasterizationState = &rasterizerCI;
 	ci.pDepthStencilState = &depthStencilCI;
+	ci.pMultisampleState = &multisampleCI;
+	ci.pViewportState = &viewportCI;
+	ci.pColorBlendState = &cbCI;
+	ci.renderPass = m_renderPass;
+	ci.layout = m_pipelineLayout;
+	result = vkCreateGraphicsPipelines(m_device, VK_NULL_HANDLE, 1, &ci, nullptr, &m_pipeline);
+	checkResult(result);
 
+	// シェーダバイナリはもう使わないので解放
+	for (const VkPipelineShaderStageCreateInfo& v : shaderStages)
+	{
+		vkDestroyShaderModule(m_device, v.module, nullptr);
+	}
 }
 
 void TriangleApp::cleanup()
