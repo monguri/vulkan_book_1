@@ -19,8 +19,8 @@ void TriangleApp::prepare()
 
 	Vertex vertices[] = {
 		{vec3(-1.0f, 0.0f, 0.0f), red}, // 左下
-		{vec3(1.0f, 0.0f, 0.0f), green}, // 右下
-		{vec3(0.0f, 1.0f, 0.0f), blue}, // 真ん中上
+		{vec3(1.0f, 0.0f, 0.0f), blue}, // 右下
+		{vec3(0.0f, 1.0f, 0.0f), green}, // 真ん中上
 	};
 
 	uint32_t indices[] = {0, 1, 2};
@@ -172,6 +172,12 @@ void TriangleApp::prepare()
 
 void TriangleApp::cleanup()
 {
+	vkDestroyPipelineLayout(m_device, m_pipelineLayout, nullptr);
+	vkDestroyPipeline(m_device, m_pipeline, nullptr);
+	vkFreeMemory(m_device, m_vertexBuffer.memory, nullptr);
+	vkFreeMemory(m_device, m_indexBuffer.memory, nullptr);
+	vkDestroyBuffer(m_device, m_vertexBuffer.buffer, nullptr);
+	vkDestroyBuffer(m_device, m_indexBuffer.buffer, nullptr);
 }
 
 void TriangleApp::makeCommand(VkCommandBuffer command)
