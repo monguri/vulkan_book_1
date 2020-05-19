@@ -6,58 +6,20 @@ using namespace glm;
 
 void CubeApp::prepare()
 {
-	// 頂点バッファ、インデックスバッファ作成
-	struct Vertex
-	{
-		glm::vec3 pos;
-		glm::vec3 color;
-	};
-
-	const vec3 red(1.0f, 0.0f, 0.0f);
-	const vec3 green(0.0f, 1.0f, 0.0f);
-	const vec3 blue(0.0f, 0.0f, 1.0f);
-
-	Vertex vertices[] = {
-		{vec3(-1.0f, 0.0f, 0.0f), red}, // 左下
-		{vec3(1.0f, 0.0f, 0.0f), blue}, // 右下
-		{vec3(0.0f, 1.0f, 0.0f), green}, // 真ん中上
-	};
-
-	uint32_t indices[] = {0, 1, 2};
-
-	m_vertexBuffer = createBuffer(sizeof(vertices), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-	m_indexBuffer = createBuffer(sizeof(indices), VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
-
-	// 頂点データ書き込み
-	{
-		void* p = nullptr;
-		VkResult result = vkMapMemory(m_device, m_vertexBuffer.memory, 0, VK_WHOLE_SIZE, 0, &p);
-		checkResult(result);
-		memcpy(p, vertices, sizeof(vertices));
-		vkUnmapMemory(m_device, m_vertexBuffer.memory);
-	}
-
-	// インデックスデータ書き込み
-	{
-		void* p = nullptr;
-		VkResult result = vkMapMemory(m_device, m_indexBuffer.memory, 0, VK_WHOLE_SIZE, 0, &p);
-		checkResult(result);
-		memcpy(p, indices, sizeof(indices));
-		vkUnmapMemory(m_device, m_indexBuffer.memory);
-	}
-	m_indexCount = _countof(indices);
+	makeCubeGeometry();
 
 	// 頂点の入力の設定
 	VkVertexInputBindingDescription inputBinding{
 		0, // binding
-		sizeof(Vertex), // stride
+		sizeof(CubeVertex), // stride
 		VK_VERTEX_INPUT_RATE_VERTEX // inputRate
 	};
 
-	std::array<VkVertexInputAttributeDescription, 2> inputAttribs{
+	std::array<VkVertexInputAttributeDescription, 3> inputAttribs{
 		{
-			{0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, pos)},
-			{1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, color)},
+			{0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(CubeVertex, pos)},
+			{1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(CubeVertex, color)},
+			{2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(CubeVertex, uv)},
 		}
 	};
 
@@ -189,6 +151,90 @@ void CubeApp::makeCommand(VkCommandBuffer command)
 	vkCmdBindIndexBuffer(command, m_indexBuffer.buffer, offset, VK_INDEX_TYPE_UINT32);
 
 	vkCmdDrawIndexed(command, m_indexCount, 1, 0, 0, 0);
+}
+
+void CubeApp::makeCubeGeometry()
+{
+	const float k = 1.0f;
+	const vec3 red(1.0f, 0.0f, 0.0f);
+	const vec3 green(0.0f, 1.0f, 0.0f);
+	const vec3 blue(0.0f, 0.0f, 1.0f);
+	const vec3 white(1.0f);
+	const vec3 black(0.0f);
+	const vec3 yellow(1.0f, 1.0f, 0.0f);
+	const vec3 magenta(1.0f, 0.0f, 1.0f);
+	const vec3 cyan(0.0f, 1.0f, 1.0f);
+
+	// この本だとUVは左下が(0,0)にして、ビューポートの設定で逆になるように扱う
+	const vec2 lb(0.0f, 0.0f);
+	const vec2 lt(0.0f, 1.0f);
+	const vec2 rb(1.0f, 0.0f);
+	const vec2 rt(1.0f, 1.0f);
+
+	CubeVertex vertices[] = {
+		// 正面
+		{vec3(-k, k, k), yellow, lb},
+		{vec3(-k, -k, k), red, lt},
+		{vec3(k, k, k), white, rb},
+		{vec3(k, -k, k), magenta, rt},
+		// 右
+		{vec3(k, k, k), white, lb},
+		{vec3(k, -k, k), magenta, lt},
+		{vec3(k, k, -k), cyan, rb},
+		{vec3(k, -k, -k), blue, rt},
+		// 左
+		{vec3(-k, k, -k), green, lb},
+		{vec3(-k, -k, -k), black, lt},
+		{vec3(-k, k, k), yellow, rb},
+		{vec3(-k, -k, k), red, rt},
+		// 裏
+		{vec3(k, k, -k), cyan, lb},
+		{vec3(k, -k, -k), blue, lt},
+		{vec3(-k, k, -k), green, rb},
+		{vec3(-k, -k, -k), black, rt},
+		// 上
+		{vec3(-k, k, -k), green, lb},
+		{vec3(-k, k, k), yellow, lt},
+		{vec3(k, k, -k), cyan, rb},
+		{vec3(k, k, k), white, rt},
+		// 底
+		{vec3(-k, -k, k), red, lb},
+		{vec3(-k, -k, -k), black, lt},
+		{vec3(k, -k, k), magenta, rb},
+		{vec3(k, -k, -k), blue, rt},
+	};
+
+	uint32_t indices[] = {
+		0, 2, 1, 1, 2, 3, // 正面
+		4, 6, 5, 5, 6, 7, // 右
+		8, 10, 9, 9, 10, 11, // 左
+		12, 14, 13, 13, 14, 15, // 裏
+		16, 18, 17, 17, 18, 19, // 上
+		20, 22, 21, 21, 22, 23, // 底
+	};
+
+	m_vertexBuffer = createBuffer(sizeof(vertices), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+	m_indexBuffer = createBuffer(sizeof(indices), VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+
+	// 頂点データ書き込み
+	{
+		void* p = nullptr;
+		VkResult result = vkMapMemory(m_device, m_vertexBuffer.memory, 0, VK_WHOLE_SIZE, 0, &p);
+		checkResult(result);
+		memcpy(p, vertices, sizeof(vertices));
+		vkUnmapMemory(m_device, m_vertexBuffer.memory);
+	}
+
+	// インデックスデータ書き込み
+	{
+		void* p = nullptr;
+		VkResult result = vkMapMemory(m_device, m_indexBuffer.memory, 0, VK_WHOLE_SIZE, 0, &p);
+		checkResult(result);
+		memcpy(p, indices, sizeof(indices));
+		vkUnmapMemory(m_device, m_indexBuffer.memory);
+	}
+
+	m_indexCount = _countof(indices);
 }
 
 CubeApp::BufferObject CubeApp::createBuffer(uint32_t size, VkBufferUsageFlags usage)
