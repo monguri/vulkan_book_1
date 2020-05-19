@@ -7,6 +7,10 @@ using namespace glm;
 void CubeApp::prepare()
 {
 	makeCubeGeometry();
+	prepareUniformBuffers();
+	prepareDescriptorSetLayout();
+	prepareDescriptorPool();
+	prepareDescriptorSet();
 
 	// í∏ì_ÇÃì¸óÕÇÃê›íË
 	VkVertexInputBindingDescription inputBinding{
@@ -237,7 +241,56 @@ void CubeApp::makeCubeGeometry()
 	m_indexCount = _countof(indices);
 }
 
-CubeApp::BufferObject CubeApp::createBuffer(uint32_t size, VkBufferUsageFlags usage)
+void CubeApp::prepareUniformBuffers()
+{
+	m_uniformBuffers.resize(m_swapchainViews.size());
+	for (BufferObject& v : m_uniformBuffers)
+	{
+		VkMemoryPropertyFlags uboFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+		v = createBuffer(sizeof(ShaderParameters), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, uboFlags);
+	}
+}
+
+void CubeApp::prepareDescriptorSetLayout()
+{
+	std::vector<VkDescriptorSetLayoutBinding> bindings;
+
+	VkDescriptorSetLayoutBinding bindingUBO{};
+	bindingUBO.binding = 0;
+	bindingUBO.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	bindingUBO.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+	bindingUBO.descriptorCount = 1;
+	bindings.push_back(bindingUBO);
+
+	VkDescriptorSetLayoutCreateInfo ci{};
+	ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	ci.bindingCount = uint32_t(bindings.size());
+	ci.pBindings = bindings.data();
+	VkResult result = vkCreateDescriptorSetLayout(m_device, &ci, nullptr, &m_descriptorSetLayout);
+	checkResult(result);
+}
+
+void CubeApp::prepareDescriptorPool()
+{
+	std::array<VkDescriptorPoolSize, 1> descPoolSize;
+	descPoolSize[0].descriptorCount = uint32_t(m_uniformBuffers.size());
+	descPoolSize[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+
+	VkDescriptorPoolCreateInfo ci{};
+	ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+	ci.maxSets = uint32_t(m_uniformBuffers.size());
+	ci.poolSizeCount = uint32_t(descPoolSize.size());
+	ci.pPoolSizes = descPoolSize.data();
+	VkResult result = vkCreateDescriptorPool(m_device, &ci, nullptr, &m_descriptorPool);
+	checkResult(result);
+}
+
+void CubeApp::prepareDescriptorSet()
+{
+	// TODO:é¿ëï
+}
+
+CubeApp::BufferObject CubeApp::createBuffer(uint32_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags flags)
 {
 	BufferObject obj;
 
@@ -253,7 +306,6 @@ CubeApp::BufferObject CubeApp::createBuffer(uint32_t size, VkBufferUsageFlags us
 	VkMemoryAllocateInfo info{};
 	info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	info.allocationSize = reqs.size;
-	VkMemoryPropertyFlags flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
 	info.memoryTypeIndex = getMemoryTypeIndex(reqs.memoryTypeBits, flags);
 	result = vkAllocateMemory(m_device, &info, nullptr, &obj.memory);
 	checkResult(result);
