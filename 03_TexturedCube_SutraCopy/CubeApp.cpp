@@ -1,6 +1,7 @@
 #include "CubeApp.h"
 #include <array>
 #include <fstream>
+#include <glm/gtc/matrix_transform.hpp>
 
 using namespace glm;
 
@@ -148,11 +149,32 @@ void CubeApp::cleanup()
 
 void CubeApp::makeCommand(VkCommandBuffer command)
 {
+	// ユニフォームバッファの中身を更新する
+	ShaderParameters shaderParam{};
+	shaderParam.mtxWorld = rotate(identity<glm::mat4>(), radians(45.0f), vec3(0, 1, 0));
+	shaderParam.mtxView = lookAtRH(vec3(0.0f, 3.0f, 5.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+	shaderParam.mtxProj = perspective(radians(60.0f), 640.0f / 480.0f, 0.01f, 100.0f);
+
+	{
+		const VkDeviceMemory& memory = m_uniformBuffers[m_imageIndex].memory;
+		void* p = nullptr;
+		VkResult result = vkMapMemory(m_device, memory, 0, VK_WHOLE_SIZE, 0, &p);
+		checkResult(result);
+		memcpy(p, &shaderParam, sizeof(shaderParam));
+		vkUnmapMemory(m_device, memory);
+	}
+
 	vkCmdBindPipeline(command, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
 
 	VkDeviceSize offset = 0;
 	vkCmdBindVertexBuffers(command, 0, 1, &m_vertexBuffer.buffer, &offset);
 	vkCmdBindIndexBuffer(command, m_indexBuffer.buffer, offset, VK_INDEX_TYPE_UINT32);
+
+	// ディクリプタセットをセット
+	VkDescriptorSet descriptorSets[] = {
+		m_descriptorSet[m_imageIndex]
+	};
+	vkCmdBindDescriptorSets(command, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, descriptorSets, 0, nullptr);
 
 	vkCmdDrawIndexed(command, m_indexCount, 1, 0, 0, 0);
 }

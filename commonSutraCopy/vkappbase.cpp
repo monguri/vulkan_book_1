@@ -576,6 +576,7 @@ void VulkanAppBase::render()
 	vkCmdBeginRenderPass(command, &renderPassBI, VK_SUBPASS_CONTENTS_INLINE);
 
 	// VulkanAppBaseを継承したクラスごとのコマンド格納処理
+	m_imageIndex = nextImageIndex;
 	makeCommand(command);
 
 	// レンダーパス終了、コマンドバッファへのコマンド格納終了

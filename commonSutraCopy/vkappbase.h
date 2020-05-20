@@ -76,5 +76,7 @@ protected:
 	std::vector<VkCommandBuffer> m_commands;
 	std::vector<VkFence> m_fences;
 	VkSemaphore m_renderCompletedSem, m_presentCompletedSem = VK_NULL_HANDLE;
+
+	uint32_t m_imageIndex = 0;
 };
 
