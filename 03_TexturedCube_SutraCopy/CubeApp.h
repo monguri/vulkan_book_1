@@ -50,5 +50,6 @@ private:
 
 	VkDescriptorSetLayout m_descriptorSetLayout = VK_NULL_HANDLE;
 	VkDescriptorPool m_descriptorPool = VK_NULL_HANDLE;
+	std::vector<VkDescriptorSet> m_descriptorSet;
 };
 

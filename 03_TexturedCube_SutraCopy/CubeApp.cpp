@@ -243,6 +243,7 @@ void CubeApp::makeCubeGeometry()
 
 void CubeApp::prepareUniformBuffers()
 {
+	// TODO:なぜ定数バッファがダブルバッファにひとつずつ必要なのか？
 	m_uniformBuffers.resize(m_swapchainViews.size());
 	for (BufferObject& v : m_uniformBuffers)
 	{
@@ -287,7 +288,44 @@ void CubeApp::prepareDescriptorPool()
 
 void CubeApp::prepareDescriptorSet()
 {
-	// TODO:実装
+	// TODO:なぜ定数バッファがダブルバッファにひとつずつ必要なのか？
+	std::vector<VkDescriptorSetLayout> layouts;
+	for (size_t i = 0; i < m_uniformBuffers.size(); ++i)
+	{
+		layouts.push_back(m_descriptorSetLayout);
+	}
+
+	VkDescriptorSetAllocateInfo ai{};
+	ai.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	ai.descriptorPool = m_descriptorPool;
+	ai.descriptorSetCount = uint32_t(m_uniformBuffers.size());
+	ai.pSetLayouts = layouts.data();
+
+	m_descriptorSet.resize(m_uniformBuffers.size());
+	VkResult result = vkAllocateDescriptorSets(m_device, &ai, m_descriptorSet.data());
+	checkResult(result);
+
+	// ディスクリプタセットへ書き込み
+	for (size_t i = 0; i < m_uniformBuffers.size(); ++i)
+	{
+		VkDescriptorBufferInfo descUBO{};
+		descUBO.buffer = m_uniformBuffers[i].buffer;
+		descUBO.offset = 0;
+		descUBO.range = VK_WHOLE_SIZE;
+
+		VkWriteDescriptorSet ubo{};
+		ubo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		ubo.dstBinding = 0;
+		ubo.descriptorCount = 1;
+		ubo.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		ubo.pBufferInfo = &descUBO;
+		ubo.dstSet = m_descriptorSet[i];
+
+		std::vector<VkWriteDescriptorSet> writeSets = {
+			ubo
+		};
+		vkUpdateDescriptorSets(m_device, uint32_t(writeSets.size()), writeSets.data(), 0, nullptr);
+	}
 }
 
 CubeApp::BufferObject CubeApp::createBuffer(uint32_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags flags)
