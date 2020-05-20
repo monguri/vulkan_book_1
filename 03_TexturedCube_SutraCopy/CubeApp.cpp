@@ -40,9 +40,9 @@ void CubeApp::prepare()
 	VkPipelineColorBlendAttachmentState blendAttachment{};
 	blendAttachment.blendEnable = VK_TRUE;
 	blendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-	blendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
+	blendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
 	blendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-	blendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+	blendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
 	blendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
 	blendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
 	blendAttachment.colorWriteMask = colorWriteAll;
@@ -110,6 +110,8 @@ void CubeApp::prepare()
 	// パイプラインレイアウト
 	VkPipelineLayoutCreateInfo pipelineLayoutCI{};
 	pipelineLayoutCI.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	pipelineLayoutCI.setLayoutCount = 1;
+	pipelineLayoutCI.pSetLayouts = &m_descriptorSetLayout;
 	VkResult result = vkCreatePipelineLayout(m_device, &pipelineLayoutCI, nullptr, &m_pipelineLayout);
 	checkResult(result);
 
@@ -139,12 +141,22 @@ void CubeApp::prepare()
 
 void CubeApp::cleanup()
 {
+	for (BufferObject& v : m_uniformBuffers)
+	{
+		vkDestroyBuffer(m_device, v.buffer, nullptr);
+		vkFreeMemory(m_device, v.memory, nullptr);
+	}
+
 	vkDestroyPipelineLayout(m_device, m_pipelineLayout, nullptr);
 	vkDestroyPipeline(m_device, m_pipeline, nullptr);
+
 	vkFreeMemory(m_device, m_vertexBuffer.memory, nullptr);
 	vkFreeMemory(m_device, m_indexBuffer.memory, nullptr);
 	vkDestroyBuffer(m_device, m_vertexBuffer.buffer, nullptr);
 	vkDestroyBuffer(m_device, m_indexBuffer.buffer, nullptr);
+
+	vkDestroyDescriptorPool(m_device, m_descriptorPool, nullptr);
+	vkDestroyDescriptorSetLayout(m_device, m_descriptorSetLayout, nullptr);
 }
 
 void CubeApp::makeCommand(VkCommandBuffer command)
