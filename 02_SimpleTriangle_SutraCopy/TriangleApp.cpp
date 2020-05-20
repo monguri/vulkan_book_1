@@ -73,9 +73,9 @@ void TriangleApp::prepare()
 	VkPipelineColorBlendAttachmentState blendAttachment{};
 	blendAttachment.blendEnable = VK_TRUE;
 	blendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-	blendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
+	blendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
 	blendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-	blendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+	blendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
 	blendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
 	blendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
 	blendAttachment.colorWriteMask = colorWriteAll;
