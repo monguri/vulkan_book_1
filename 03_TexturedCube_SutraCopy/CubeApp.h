@@ -31,6 +31,13 @@ private:
 		VkDeviceMemory memory;
 	};
 
+	struct TextureObject
+	{
+		VkImage image;
+		VkDeviceMemory memory;
+		VkImageView view;
+	};
+
 	void makeCubeGeometry();
 	void prepareUniformBuffers();
 	void prepareDescriptorSetLayout();
@@ -40,9 +47,14 @@ private:
 	BufferObject createBuffer(uint32_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 	VkPipelineShaderStageCreateInfo loadShaderModule(const char* fileName, VkShaderStageFlagBits stage);
 
+	VkSampler createSampler();
+	TextureObject createTexture(const char* fileName);
+
 	BufferObject m_vertexBuffer;
 	BufferObject m_indexBuffer;
 	std::vector<BufferObject> m_uniformBuffers;
+	TextureObject m_texture;
+	VkSampler m_sampler = VK_NULL_HANDLE;
 
 	VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
 	VkPipeline m_pipeline = VK_NULL_HANDLE;

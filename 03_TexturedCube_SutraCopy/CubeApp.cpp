@@ -11,6 +11,10 @@ void CubeApp::prepare()
 	prepareUniformBuffers();
 	prepareDescriptorSetLayout();
 	prepareDescriptorPool();
+
+	m_texture = createTexture("texture.tga");
+	m_sampler = createSampler();
+
 	prepareDescriptorSet();
 
 	// í∏ì_ÇÃì¸óÕÇÃê›íË
@@ -290,12 +294,18 @@ void CubeApp::prepareDescriptorSetLayout()
 {
 	std::vector<VkDescriptorSetLayoutBinding> bindings;
 
-	VkDescriptorSetLayoutBinding bindingUBO{};
+	VkDescriptorSetLayoutBinding bindingUBO{}, bindingTex{};
 	bindingUBO.binding = 0;
 	bindingUBO.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	bindingUBO.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 	bindingUBO.descriptorCount = 1;
 	bindings.push_back(bindingUBO);
+
+	bindingTex.binding = 1;
+	bindingTex.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	bindingTex.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	bindingTex.descriptorCount = 1;
+	bindings.push_back(bindingTex);
 
 	VkDescriptorSetLayoutCreateInfo ci{};
 	ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -310,6 +320,8 @@ void CubeApp::prepareDescriptorPool()
 	std::array<VkDescriptorPoolSize, 1> descPoolSize;
 	descPoolSize[0].descriptorCount = uint32_t(m_uniformBuffers.size());
 	descPoolSize[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	descPoolSize[1].descriptorCount = uint32_t(m_uniformBuffers.size());
+	descPoolSize[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 
 	VkDescriptorPoolCreateInfo ci{};
 	ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -347,6 +359,11 @@ void CubeApp::prepareDescriptorSet()
 		descUBO.offset = 0;
 		descUBO.range = VK_WHOLE_SIZE;
 
+		VkDescriptorImageInfo descImage{};
+		descImage.imageView = m_texture.view;
+		descImage.sampler = m_sampler;
+		descImage.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
 		VkWriteDescriptorSet ubo{};
 		ubo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		ubo.dstBinding = 0;
@@ -354,6 +371,14 @@ void CubeApp::prepareDescriptorSet()
 		ubo.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		ubo.pBufferInfo = &descUBO;
 		ubo.dstSet = m_descriptorSet[i];
+
+		VkWriteDescriptorSet tex{};
+		tex.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		tex.dstBinding = 0;
+		tex.descriptorCount = 1;
+		tex.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		tex.pImageInfo = &descImage;
+		tex.dstSet = m_descriptorSet[i];
 
 		std::vector<VkWriteDescriptorSet> writeSets = {
 			ubo
@@ -417,5 +442,19 @@ VkPipelineShaderStageCreateInfo CubeApp::loadShaderModule(const char* fileName, 
 	shaderStageCI.pName = "main";
 
 	return shaderStageCI;
+}
+
+VkSampler CubeApp::createSampler()
+{
+	// TODO:é¿ëï
+	VkSampler sampler;
+	return sampler;
+}
+
+CubeApp::TextureObject CubeApp::createTexture(const char* fileName)
+{
+	// TODO:é¿ëï
+	TextureObject texture;
+	return texture;
 }
 
