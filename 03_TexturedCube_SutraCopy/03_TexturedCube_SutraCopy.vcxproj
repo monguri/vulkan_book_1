@@ -157,6 +157,7 @@
     <None Include="shader.vert" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\commonSutraCopy\stb_image.h" />
     <ClInclude Include="..\commonSutraCopy\vkappbase.h" />
     <ClInclude Include="CubeApp.h" />
   </ItemGroup>

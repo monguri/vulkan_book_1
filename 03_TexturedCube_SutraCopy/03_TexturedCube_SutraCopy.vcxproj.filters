@@ -37,5 +37,8 @@
     <ClInclude Include="CubeApp.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="..\commonSutraCopy\stb_image.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
