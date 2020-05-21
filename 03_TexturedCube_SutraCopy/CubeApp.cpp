@@ -3,6 +3,10 @@
 #include <fstream>
 #include <glm/gtc/matrix_transform.hpp>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "../commonSutraCopy/stb_image.h"
+
+
 using namespace glm;
 
 void CubeApp::prepare()
@@ -150,6 +154,11 @@ void CubeApp::cleanup()
 		vkDestroyBuffer(m_device, v.buffer, nullptr);
 		vkFreeMemory(m_device, v.memory, nullptr);
 	}
+
+	vkDestroySampler(m_device, m_sampler, nullptr);
+	vkDestroyImage(m_device, m_texture.image, nullptr);
+	vkDestroyImageView(m_device, m_texture.view, nullptr);
+	vkFreeMemory(m_device, m_texture.memory, nullptr);
 
 	vkDestroyPipelineLayout(m_device, m_pipelineLayout, nullptr);
 	vkDestroyPipeline(m_device, m_pipeline, nullptr);
@@ -317,7 +326,7 @@ void CubeApp::prepareDescriptorSetLayout()
 
 void CubeApp::prepareDescriptorPool()
 {
-	std::array<VkDescriptorPoolSize, 1> descPoolSize;
+	std::array<VkDescriptorPoolSize, 2> descPoolSize;
 	descPoolSize[0].descriptorCount = uint32_t(m_uniformBuffers.size());
 	descPoolSize[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	descPoolSize[1].descriptorCount = uint32_t(m_uniformBuffers.size());
@@ -381,7 +390,7 @@ void CubeApp::prepareDescriptorSet()
 		tex.dstSet = m_descriptorSet[i];
 
 		std::vector<VkWriteDescriptorSet> writeSets = {
-			ubo
+			ubo, tex
 		};
 		vkUpdateDescriptorSets(m_device, uint32_t(writeSets.size()), writeSets.data(), 0, nullptr);
 	}
@@ -446,15 +455,189 @@ VkPipelineShaderStageCreateInfo CubeApp::loadShaderModule(const char* fileName, 
 
 VkSampler CubeApp::createSampler()
 {
-	// TODO:実装
 	VkSampler sampler;
+	VkSamplerCreateInfo ci{};
+	ci.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	ci.minFilter = VK_FILTER_LINEAR;
+	ci.magFilter = VK_FILTER_LINEAR;
+	ci.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	ci.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	ci.maxAnisotropy = 1.0f;
+	ci.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+	VkResult result = vkCreateSampler(m_device, &ci, nullptr, &sampler);
+	checkResult(result);
 	return sampler;
 }
 
 CubeApp::TextureObject CubeApp::createTexture(const char* fileName)
 {
-	// TODO:実装
-	TextureObject texture;
+	BufferObject stagingBuffer;
+	TextureObject texture{};
+
+	// 画像データをstbライブラリでロード
+	int width, height, channels;
+	stbi_uc* pImage = stbi_load(fileName, &width, &height, &channels, 0);
+	VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
+
+	{
+		// テクスチャのVkImageを生成
+		VkImageCreateInfo ci{};
+		ci.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+		ci.extent = { uint32_t(width), uint32_t(height), 1 };
+		ci.format = format;
+		ci.imageType = VK_IMAGE_TYPE_2D;
+		ci.mipLevels = 1;
+		ci.samples = VK_SAMPLE_COUNT_1_BIT;
+		ci.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+		ci.arrayLayers = 1;
+		VkResult result = vkCreateImage(m_device, &ci, nullptr, &texture.image);
+		checkResult(result);
+
+		// メモリ量の算出
+		VkMemoryRequirements reqs;
+		vkGetImageMemoryRequirements(m_device, texture.image, &reqs);
+		VkMemoryAllocateInfo info{};
+		info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+		info.allocationSize = reqs.size;
+		// メモリタイプの判定
+		info.memoryTypeIndex = getMemoryTypeIndex(reqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		// メモリの確保
+		result = vkAllocateMemory(m_device, &info, nullptr, &texture.memory);
+		checkResult(result);
+		// メモリのバインド
+		result = vkBindImageMemory(m_device, texture.image, texture.memory, 0);
+		checkResult(result);
+	}
+
+	{
+		uint32_t imageSize = width * height * sizeof(uint32_t);
+		// ステージングバッファを用意
+		stagingBuffer = createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+
+		// ステージングバッファに画像データを書き込み
+		void* p = nullptr;
+		VkResult result = vkMapMemory(m_device, stagingBuffer.memory, 0, VK_WHOLE_SIZE, 0, &p);
+		checkResult(result);
+		memcpy(p, pImage, imageSize);
+		vkUnmapMemory(m_device, stagingBuffer.memory);
+	}
+
+	VkCommandBuffer command;
+	{
+		VkCommandBufferAllocateInfo ai{};
+		ai.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		ai.commandBufferCount = 1;
+		ai.commandPool = m_commandPool;
+		ai.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+		VkResult result = vkAllocateCommandBuffers(m_device, &ai, &command);
+		checkResult(result);
+	}
+
+	VkCommandBufferBeginInfo commandBI{};
+	commandBI.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	VkResult result = vkBeginCommandBuffer(command, &commandBI);
+	checkResult(result);
+
+	setImageMemoryBarrier(command, texture.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+	VkBufferImageCopy copyRegion{};
+	copyRegion.imageExtent = { uint32_t(width), uint32_t(height), 1 };
+	copyRegion.imageSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+	vkCmdCopyBufferToImage(command, stagingBuffer.buffer, texture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
+
+	setImageMemoryBarrier(command, texture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+	result = vkEndCommandBuffer(command);
+	checkResult(result);
+
+	// コマンドバッファ実行
+	VkSubmitInfo submitInfo{};
+	VkPipelineStageFlags waitStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &command;
+	vkQueueSubmit(m_deviceQueue, 1, &submitInfo, VK_NULL_HANDLE);
+	{
+		// テクスチャ参照用のビューを作成
+		VkImageViewCreateInfo ci{};
+		ci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		ci.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		ci.image = texture.image;
+		ci.format = format;
+		ci.components = {
+			VK_COMPONENT_SWIZZLE_R,
+			VK_COMPONENT_SWIZZLE_G,
+			VK_COMPONENT_SWIZZLE_B,
+			VK_COMPONENT_SWIZZLE_A,
+		};
+		ci.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+		VkResult result = vkCreateImageView(m_device, &ci, nullptr, &texture.view);
+		checkResult(result);
+	}
+
+	vkDeviceWaitIdle(m_device);
+	vkFreeCommandBuffers(m_device, m_commandPool, uint32_t(m_commands.size()), m_commands.data());
+
+	// ステージングバッファ解放
+	vkFreeMemory(m_device, stagingBuffer.memory, nullptr);
+	vkDestroyBuffer(m_device, stagingBuffer.buffer, nullptr);
+
+	stbi_image_free(pImage);
 	return texture;
+}
+
+void CubeApp::setImageMemoryBarrier(VkCommandBuffer command, VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout)
+{
+	VkImageMemoryBarrier imb{};
+	imb.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	imb.oldLayout = oldLayout;
+	imb.newLayout = newLayout;
+	imb.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	imb.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	imb.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
+	imb.image = image;
+
+	VkPipelineStageFlags srcStage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+	VkPipelineStageFlags dstStage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+
+	switch (oldLayout)
+	{
+		case VK_IMAGE_LAYOUT_UNDEFINED:
+			imb.srcAccessMask = 0;
+			break;
+		case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+			imb.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+			srcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+			break;
+	}
+
+	switch (newLayout)
+	{
+		case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+			imb.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+			dstStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+			break;
+		case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+			imb.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+			dstStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+			break;
+		case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+			imb.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+			dstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+			break;
+	}
+
+	vkCmdPipelineBarrier(
+		command,
+		srcStage,
+		dstStage,
+		0,
+		0, // memoryBarrierCount
+		nullptr,
+		0, // bufferMemoryBarrierCount
+		nullptr,
+		1, // imageMemoryBarrierCount
+		&imb
+	);
 }
 

@@ -49,6 +49,7 @@ private:
 
 	VkSampler createSampler();
 	TextureObject createTexture(const char* fileName);
+	void setImageMemoryBarrier(VkCommandBuffer command, VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout);
 
 	BufferObject m_vertexBuffer;
 	BufferObject m_indexBuffer;
