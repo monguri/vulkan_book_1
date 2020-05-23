@@ -12,6 +12,22 @@ using namespace glm;
 
 void ModelApp::prepare()
 {
+	// モデルデータの読み込み
+	std::experimental::filesystem::path modelFilePath =  std::experimental::filesystem::path("alicia-solid.vrm");
+	if (modelFilePath.is_relative())
+	{
+		std::experimental::filesystem::path current = std::experimental::filesystem::current_path();
+		current /= modelFilePath;
+		current.swap(modelFilePath);
+	}
+
+	std::unique_ptr<StreamReader> reader = std::make_unique<StreamReader>(modelFilePath.parent_path());
+	std::shared_ptr<std::istream> glbStream = reader->GetInputStream(modelFilePath.filename().u8string());
+	std::shared_ptr<Microsoft::glTF::GLBResourceReader> glbResourceReader = std::make_shared<Microsoft::glTF::GLBResourceReader>(std::move(reader), std::move(glbStream));
+	const Microsoft::glTF::Document& document = Microsoft::glTF::Deserialize(glbResourceReader->GetJson());
+
+
+
 	makeCubeGeometry();
 	prepareUniformBuffers();
 	prepareDescriptorSetLayout();
