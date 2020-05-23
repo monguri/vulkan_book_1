@@ -6,7 +6,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "../commonSutraCopy/stb_image.h"
 
-#include "../commonSutraCopy/streamreader.h"
+#include "streamreader.h"
 
 using namespace glm;
 

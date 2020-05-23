@@ -35,7 +35,7 @@
     <ClInclude Include="ModelApp.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="..\commonSutraCopy\streamreader.h">
+    <ClInclude Include="streamreader.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>

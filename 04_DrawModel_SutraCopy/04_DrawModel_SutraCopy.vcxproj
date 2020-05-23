@@ -153,9 +153,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\commonSutraCopy\stb_image.h" />
-    <ClInclude Include="..\commonSutraCopy\streamreader.h" />
     <ClInclude Include="..\commonSutraCopy\vkappbase.h" />
     <ClInclude Include="ModelApp.h" />
+    <ClInclude Include="streamreader.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
