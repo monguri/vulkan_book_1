@@ -27,6 +27,8 @@ void ModelApp::prepare()
 	const Microsoft::glTF::Document& document = Microsoft::glTF::Deserialize(glbResourceReader->GetJson());
 
 
+	makeModelGeometry(document, glbResourceReader);
+
 
 	makeCubeGeometry();
 	prepareUniformBuffers();
@@ -221,6 +223,70 @@ void ModelApp::makeCommand(VkCommandBuffer command)
 	vkCmdDrawIndexed(command, m_indexCount, 1, 0, 0, 0);
 }
 
+void ModelApp::makeModelGeometry(const Microsoft::glTF::Document& doc, std::shared_ptr<Microsoft::glTF::GLTFResourceReader> reader)
+{
+	using namespace Microsoft::glTF;
+
+	for (const Mesh& mesh : doc.meshes.Elements())
+	{
+		for (const MeshPrimitive& meshPrimitive : mesh.primitives)
+		{
+			std::vector<Vertex> vertices;
+			std::vector<uint32_t> indices;
+
+			// 頂点位置情報アクセサの取得
+			const std::string& idPos = meshPrimitive.GetAttributeAccessorId(ACCESSOR_POSITION);
+			const Accessor& accPos = doc.accessors.Get(idPos);
+
+			// 法線情報アクセサの取得
+			const std::string& idNrm = meshPrimitive.GetAttributeAccessorId(ACCESSOR_NORMAL);
+			const Accessor& accNrm = doc.accessors.Get(idNrm);
+
+			// UV情報アクセサの取得
+			const std::string& idUV = meshPrimitive.GetAttributeAccessorId(ACCESSOR_NORMAL);
+			const Accessor& accUV = doc.accessors.Get(idUV);
+
+			// インデックス情報アクセサの取得
+			const std::string& idIndex = meshPrimitive.indicesAccessorId;
+			const Accessor& accIndex = doc.accessors.Get(idIndex);
+
+			// アクセサからデータ列を取得
+			const std::vector<float> vertPos = reader->ReadBinaryData<float>(doc, accPos);
+			const std::vector<float> vertNrm = reader->ReadBinaryData<float>(doc, accNrm);
+			const std::vector<float> vertUV = reader->ReadBinaryData<float>(doc, accUV);
+
+			size_t vertexCount = accPos.count;
+			for (uint32_t i = 0; i < vertexCount; ++i)
+			{
+				// 頂点データの構築
+				int vid0 = 3 * i, vid1 = 3 * i + 1, vid2 = 3 * i + 2;
+				int tid0 = 2 * i, tid1 = 2 * i + 1;
+				vertices.emplace_back(
+					Vertex{
+						vec3(vertPos[vid0], vertPos[vid1], vertPos[vid2]),
+						vec3(vertNrm[vid0], vertNrm[vid1], vertNrm[vid2]),
+						vec2(vertUV[tid0], vertUV[tid1]),
+					}
+				);
+			}
+
+			// インデックスデータはアクセサから取得した配列をそのまま使えばよい
+			indices = reader->ReadBinaryData<uint32_t>(doc, accIndex);
+
+			ModelMesh modelMesh;
+			uint32_t vbSize = uint32_t(sizeof(Vertex) * vertices.size());
+			uint32_t ibSize = uint32_t(sizeof(uint32_t) * indices.size());
+
+			modelMesh.vertexBuffer = createBuffer(vbSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, vertices.data());
+			modelMesh.indexBuffer = createBuffer(ibSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, indices.data());
+			modelMesh.vertexCount = uint32_t(vertices.size());
+			modelMesh.indexCount = uint32_t(indices.size());
+
+			m_model.meshes.push_back(modelMesh);
+		}
+	}
+}
+
 void ModelApp::makeCubeGeometry()
 {
 	const float k = 1.0f;
@@ -413,7 +479,7 @@ void ModelApp::prepareDescriptorSet()
 	}
 }
 
-ModelApp::BufferObject ModelApp::createBuffer(uint32_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags flags)
+ModelApp::BufferObject ModelApp::createBuffer(uint32_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags flags, const void* initialData)
 {
 	BufferObject obj;
 
@@ -435,6 +501,15 @@ ModelApp::BufferObject ModelApp::createBuffer(uint32_t size, VkBufferUsageFlags 
 
 	result = vkBindBufferMemory(m_device, obj.buffer, obj.memory, 0);
 	checkResult(result);
+
+	if ((flags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) != 0 && initialData != nullptr)
+	{
+		void* p = nullptr;
+		VkResult result = vkMapMemory(m_device, obj.memory, 0, VK_WHOLE_SIZE, 0, &p);
+		checkResult(result);
+		memcpy(p, initialData, size);
+		vkUnmapMemory(m_device, obj.memory);
+	}
 
 	return obj;
 }
