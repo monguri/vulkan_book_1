@@ -3,7 +3,7 @@
 #include "../commonSutraCopy/vkappbase.h"
 #include "glm/glm.hpp"
 
-class CubeApp : public VulkanAppBase
+class ModelApp : public VulkanAppBase
 {
 protected:
 	virtual void prepare() override;

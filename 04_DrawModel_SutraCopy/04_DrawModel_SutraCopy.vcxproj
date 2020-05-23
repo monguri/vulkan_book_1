@@ -148,13 +148,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\commonSutraCopy\vkappbase.cpp" />
-    <ClCompile Include="CubeApp.cpp" />
+    <ClCompile Include="ModelApp.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\commonSutraCopy\stb_image.h" />
     <ClInclude Include="..\commonSutraCopy\vkappbase.h" />
-    <ClInclude Include="CubeApp.h" />
+    <ClInclude Include="ModelApp.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

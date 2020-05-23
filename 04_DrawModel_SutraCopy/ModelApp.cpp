@@ -1,4 +1,4 @@
-#include "CubeApp.h"
+#include "ModelApp.h"
 #include <array>
 #include <fstream>
 #include <glm/gtc/matrix_transform.hpp>
@@ -9,7 +9,7 @@
 
 using namespace glm;
 
-void CubeApp::prepare()
+void ModelApp::prepare()
 {
 	makeCubeGeometry();
 	prepareUniformBuffers();
@@ -147,7 +147,7 @@ void CubeApp::prepare()
 	}
 }
 
-void CubeApp::cleanup()
+void ModelApp::cleanup()
 {
 	for (BufferObject& v : m_uniformBuffers)
 	{
@@ -172,7 +172,7 @@ void CubeApp::cleanup()
 	vkDestroyDescriptorSetLayout(m_device, m_descriptorSetLayout, nullptr);
 }
 
-void CubeApp::makeCommand(VkCommandBuffer command)
+void ModelApp::makeCommand(VkCommandBuffer command)
 {
 	// ユニフォームバッファの中身を更新する
 	ShaderParameters shaderParam{};
@@ -204,7 +204,7 @@ void CubeApp::makeCommand(VkCommandBuffer command)
 	vkCmdDrawIndexed(command, m_indexCount, 1, 0, 0, 0);
 }
 
-void CubeApp::makeCubeGeometry()
+void ModelApp::makeCubeGeometry()
 {
 	const float k = 1.0f;
 	const vec3 red(1.0f, 0.0f, 0.0f);
@@ -288,7 +288,7 @@ void CubeApp::makeCubeGeometry()
 	m_indexCount = _countof(indices);
 }
 
-void CubeApp::prepareUniformBuffers()
+void ModelApp::prepareUniformBuffers()
 {
 	// TODO:なぜ定数バッファがダブルバッファにひとつずつ必要なのか？
 	m_uniformBuffers.resize(m_swapchainViews.size());
@@ -299,7 +299,7 @@ void CubeApp::prepareUniformBuffers()
 	}
 }
 
-void CubeApp::prepareDescriptorSetLayout()
+void ModelApp::prepareDescriptorSetLayout()
 {
 	std::vector<VkDescriptorSetLayoutBinding> bindings;
 
@@ -324,7 +324,7 @@ void CubeApp::prepareDescriptorSetLayout()
 	checkResult(result);
 }
 
-void CubeApp::prepareDescriptorPool()
+void ModelApp::prepareDescriptorPool()
 {
 	std::array<VkDescriptorPoolSize, 2> descPoolSize;
 	descPoolSize[0].descriptorCount = uint32_t(m_uniformBuffers.size());
@@ -341,7 +341,7 @@ void CubeApp::prepareDescriptorPool()
 	checkResult(result);
 }
 
-void CubeApp::prepareDescriptorSet()
+void ModelApp::prepareDescriptorSet()
 {
 	// TODO:なぜ定数バッファがダブルバッファにひとつずつ必要なのか？
 	std::vector<VkDescriptorSetLayout> layouts;
@@ -396,7 +396,7 @@ void CubeApp::prepareDescriptorSet()
 	}
 }
 
-CubeApp::BufferObject CubeApp::createBuffer(uint32_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags flags)
+ModelApp::BufferObject ModelApp::createBuffer(uint32_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags flags)
 {
 	BufferObject obj;
 
@@ -422,7 +422,7 @@ CubeApp::BufferObject CubeApp::createBuffer(uint32_t size, VkBufferUsageFlags us
 	return obj;
 }
 
-VkPipelineShaderStageCreateInfo CubeApp::loadShaderModule(const char* fileName, VkShaderStageFlagBits stage)
+VkPipelineShaderStageCreateInfo ModelApp::loadShaderModule(const char* fileName, VkShaderStageFlagBits stage)
 {
 	std::ifstream infile(fileName, std::ios::binary);
 	if (!infile)
@@ -453,7 +453,7 @@ VkPipelineShaderStageCreateInfo CubeApp::loadShaderModule(const char* fileName, 
 	return shaderStageCI;
 }
 
-VkSampler CubeApp::createSampler()
+VkSampler ModelApp::createSampler()
 {
 	VkSampler sampler;
 	VkSamplerCreateInfo ci{};
@@ -469,7 +469,7 @@ VkSampler CubeApp::createSampler()
 	return sampler;
 }
 
-CubeApp::TextureObject CubeApp::createTexture(const char* fileName)
+ModelApp::TextureObject ModelApp::createTexture(const char* fileName)
 {
 	BufferObject stagingBuffer;
 	TextureObject texture{};
@@ -586,7 +586,7 @@ CubeApp::TextureObject CubeApp::createTexture(const char* fileName)
 	return texture;
 }
 
-void CubeApp::setImageMemoryBarrier(VkCommandBuffer command, VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout)
+void ModelApp::setImageMemoryBarrier(VkCommandBuffer command, VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout)
 {
 	VkImageMemoryBarrier imb{};
 	imb.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
