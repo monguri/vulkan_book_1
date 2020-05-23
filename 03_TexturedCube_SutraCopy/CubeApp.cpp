@@ -67,7 +67,7 @@ void CubeApp::prepare()
 		viewport.width = float(m_swapchainExtent.width);
 		viewport.height = -1.0f * float(m_swapchainExtent.height);
 		viewport.minDepth = 0.0f;
-		viewport.minDepth = 1.0f;
+		viewport.maxDepth = 1.0f;
 	}
 
 	VkRect2D scissor = {
