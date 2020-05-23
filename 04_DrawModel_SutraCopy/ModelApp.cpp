@@ -281,6 +281,7 @@ void ModelApp::makeModelGeometry(const Microsoft::glTF::Document& doc, std::shar
 			modelMesh.indexBuffer = createBuffer(ibSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, indices.data());
 			modelMesh.vertexCount = uint32_t(vertices.size());
 			modelMesh.indexCount = uint32_t(indices.size());
+			modelMesh.materialIndex = int(doc.materials.GetIndex(meshPrimitive.materialId));
 
 			m_model.meshes.push_back(modelMesh);
 		}

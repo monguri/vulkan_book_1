@@ -61,6 +61,8 @@ private:
 		BufferObject indexBuffer;
 		uint32_t vertexCount;
 		uint32_t indexCount;
+
+		int materialIndex;
 	};
 
 	struct Model
