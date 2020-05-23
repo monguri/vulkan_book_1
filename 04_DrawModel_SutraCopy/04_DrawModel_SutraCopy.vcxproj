@@ -165,6 +165,8 @@
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\04_DrawModel\packages\glm.0.9.9.800\build\native\glm.targets" Condition="Exists('..\04_DrawModel\packages\glm.0.9.9.800\build\native\glm.targets')" />
     <Import Project="..\04_DrawModel\packages\glfw.3.3.2\build\native\glfw.targets" Condition="Exists('..\04_DrawModel\packages\glfw.3.3.2\build\native\glfw.targets')" />
+    <Import Project="..\04_DrawModel\packages\rapidjson.temprelease.0.0.2.20\build\native\rapidjson.temprelease.targets" Condition="Exists('..\04_DrawModel\packages\rapidjson.temprelease.0.0.2.20\build\native\rapidjson.temprelease.targets')" />
+    <Import Project="..\04_DrawModel\packages\Microsoft.glTF.CPP.1.6.3.1\build\native\Microsoft.glTF.CPP.targets" Condition="Exists('..\04_DrawModel\packages\Microsoft.glTF.CPP.1.6.3.1\build\native\Microsoft.glTF.CPP.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
@@ -172,5 +174,7 @@
     </PropertyGroup>
     <Error Condition="!Exists('..\04_DrawModel\packages\glm.0.9.9.800\build\native\glm.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\04_DrawModel\packages\glm.0.9.9.800\build\native\glm.targets'))" />
     <Error Condition="!Exists('..\04_DrawModel\packages\glfw.3.3.2\build\native\glfw.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\04_DrawModel\packages\glfw.3.3.2\build\native\glfw.targets'))" />
+    <Error Condition="!Exists('..\04_DrawModel\packages\rapidjson.temprelease.0.0.2.20\build\native\rapidjson.temprelease.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\04_DrawModel\packages\rapidjson.temprelease.0.0.2.20\build\native\rapidjson.temprelease.targets'))" />
+    <Error Condition="!Exists('..\04_DrawModel\packages\Microsoft.glTF.CPP.1.6.3.1\build\native\Microsoft.glTF.CPP.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\04_DrawModel\packages\Microsoft.glTF.CPP.1.6.3.1\build\native\Microsoft.glTF.CPP.targets'))" />
   </Target>
 </Project>
