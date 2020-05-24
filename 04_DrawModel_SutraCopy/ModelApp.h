@@ -105,7 +105,8 @@ private:
 	Model m_model;
 
 	VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
-	VkPipeline m_pipeline = VK_NULL_HANDLE;
+	VkPipeline m_pipelineOpaque = VK_NULL_HANDLE;
+	VkPipeline m_pipelineAlpha = VK_NULL_HANDLE;
 	uint32_t m_indexCount = 0;
 
 	VkDescriptorSetLayout m_descriptorSetLayout = VK_NULL_HANDLE;
