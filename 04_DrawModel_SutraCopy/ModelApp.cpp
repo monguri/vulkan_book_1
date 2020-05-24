@@ -142,7 +142,7 @@ void ModelApp::prepare()
 		std::vector<VkPipelineShaderStageCreateInfo> shaderStages
 		{
 			loadShaderModule("shader.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
-			loadShaderModule("shader.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT),
+			loadShaderModule("shaderOpaque.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT),
 		};
 
 		// パイプライン構築

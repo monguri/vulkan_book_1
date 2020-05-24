@@ -40,8 +40,9 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shader.frag" />
     <None Include="shader.vert" />
     <None Include="packages.config" />
+    <None Include="shaderOpaque.frag" />
+    <None Include="shaderAlpha.frag" />
   </ItemGroup>
 </Project>
