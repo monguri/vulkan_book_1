@@ -30,13 +30,10 @@ void ModelApp::prepare()
 	makeModelGeometry(document, glbResourceReader);
 	makeModelMaterial(document, glbResourceReader);
 
-
-	makeCubeGeometry();
 	prepareUniformBuffers();
 	prepareDescriptorSetLayout();
 	prepareDescriptorPool();
 
-	m_texture = createTexture("texture.tga");
 	m_sampler = createSampler();
 
 	prepareDescriptorSet();
@@ -236,18 +233,27 @@ void ModelApp::cleanup()
 	}
 
 	vkDestroySampler(m_device, m_sampler, nullptr);
-	vkDestroyImage(m_device, m_texture.image, nullptr);
-	vkDestroyImageView(m_device, m_texture.view, nullptr);
-	vkFreeMemory(m_device, m_texture.memory, nullptr);
 
 	vkDestroyPipelineLayout(m_device, m_pipelineLayout, nullptr);
 	vkDestroyPipeline(m_device, m_pipelineOpaque, nullptr);
 	vkDestroyPipeline(m_device, m_pipelineAlpha, nullptr);
 
-	vkFreeMemory(m_device, m_vertexBuffer.memory, nullptr);
-	vkFreeMemory(m_device, m_indexBuffer.memory, nullptr);
-	vkDestroyBuffer(m_device, m_vertexBuffer.buffer, nullptr);
-	vkDestroyBuffer(m_device, m_indexBuffer.buffer, nullptr);
+	for (ModelMesh& mesh : m_model.meshes)
+	{
+		vkFreeMemory(m_device, mesh.vertexBuffer.memory, nullptr);
+		vkFreeMemory(m_device, mesh.indexBuffer.memory, nullptr);
+		vkDestroyBuffer(m_device, mesh.vertexBuffer.buffer, nullptr);
+		vkDestroyBuffer(m_device, mesh.indexBuffer.buffer, nullptr);
+
+		vkFreeDescriptorSets(m_device, m_descriptorPool, uint32_t(mesh.descriptorSet.size()), mesh.descriptorSet.data());
+	}
+
+	for (Material& material : m_model.materials)
+	{
+		vkFreeMemory(m_device, material.texture.memory, nullptr);
+		vkDestroyImage(m_device, material.texture.image, nullptr);
+		vkDestroyImageView(m_device, material.texture.view, nullptr);
+	}
 
 	vkDestroyDescriptorPool(m_device, m_descriptorPool, nullptr);
 	vkDestroyDescriptorSetLayout(m_device, m_descriptorSetLayout, nullptr);
@@ -270,19 +276,45 @@ void ModelApp::makeCommand(VkCommandBuffer command)
 		vkUnmapMemory(m_device, memory);
 	}
 
-	vkCmdBindPipeline(command, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineOpaque);
+	using namespace Microsoft::glTF;
+	// パイプラインをメッシュセクションごとに切り替えたくないので
+	// パイプラインごとのループが外側
+	for (AlphaMode mode : { ALPHA_OPAQUE, ALPHA_MASK, ALPHA_BLEND })
+	{
+		for (const ModelMesh& mesh : m_model.meshes)
+		{
+			// パイプラインに対応するメッシュのみ描画する
+			if (m_model.materials[mesh.materialIndex].alphaMode != mode)
+			{
+				continue;
+			}
 
-	VkDeviceSize offset = 0;
-	vkCmdBindVertexBuffers(command, 0, 1, &m_vertexBuffer.buffer, &offset);
-	vkCmdBindIndexBuffer(command, m_indexBuffer.buffer, offset, VK_INDEX_TYPE_UINT32);
+			switch (mode)
+			{
+				case ALPHA_OPAQUE:
+					// fall through
+				case ALPHA_MASK:
+					vkCmdBindPipeline(command, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineOpaque);
+					break;
+				case ALPHA_BLEND:
+					vkCmdBindPipeline(command, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineAlpha);
+					break;
+			}
 
-	// ディクリプタセットをセット
-	VkDescriptorSet descriptorSets[] = {
-		m_descriptorSet[m_imageIndex]
-	};
-	vkCmdBindDescriptorSets(command, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, descriptorSets, 0, nullptr);
+			VkDeviceSize offset = 0;
+			vkCmdBindVertexBuffers(command, 0, 1, &mesh.vertexBuffer.buffer, &offset);
+			vkCmdBindIndexBuffer(command, mesh.indexBuffer.buffer, offset, VK_INDEX_TYPE_UINT32);
 
-	vkCmdDrawIndexed(command, m_indexCount, 1, 0, 0, 0);
+			// ディクリプタセットをセット
+			VkDescriptorSet descriptorSets[] = {
+				mesh.descriptorSet[m_imageIndex]
+			}; // 配列ってこうやってstd::vectorから初期化できたんだな。。
+			vkCmdBindDescriptorSets(command, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, descriptorSets, 0, nullptr);
+
+			vkCmdDrawIndexed(command, mesh.indexCount, 1, 0, 0, 0);
+		}
+	}
+
 }
 
 void ModelApp::makeModelGeometry(const Microsoft::glTF::Document& doc, std::shared_ptr<Microsoft::glTF::GLTFResourceReader> reader)
@@ -375,90 +407,6 @@ void ModelApp::makeModelMaterial(const Microsoft::glTF::Document& doc, std::shar
 	}
 }
 
-void ModelApp::makeCubeGeometry()
-{
-	const float k = 1.0f;
-	const vec3 red(1.0f, 0.0f, 0.0f);
-	const vec3 green(0.0f, 1.0f, 0.0f);
-	const vec3 blue(0.0f, 0.0f, 1.0f);
-	const vec3 white(1.0f);
-	const vec3 black(0.0f);
-	const vec3 yellow(1.0f, 1.0f, 0.0f);
-	const vec3 magenta(1.0f, 0.0f, 1.0f);
-	const vec3 cyan(0.0f, 1.0f, 1.0f);
-
-	// この本だとUVは左下が(0,0)にして、ビューポートの設定で逆になるように扱う
-	const vec2 lb(0.0f, 0.0f);
-	const vec2 lt(0.0f, 1.0f);
-	const vec2 rb(1.0f, 0.0f);
-	const vec2 rt(1.0f, 1.0f);
-
-	CubeVertex vertices[] = {
-		// 正面
-		{vec3(-k, k, k), yellow, lb},
-		{vec3(-k, -k, k), red, lt},
-		{vec3(k, k, k), white, rb},
-		{vec3(k, -k, k), magenta, rt},
-		// 右
-		{vec3(k, k, k), white, lb},
-		{vec3(k, -k, k), magenta, lt},
-		{vec3(k, k, -k), cyan, rb},
-		{vec3(k, -k, -k), blue, rt},
-		// 左
-		{vec3(-k, k, -k), green, lb},
-		{vec3(-k, -k, -k), black, lt},
-		{vec3(-k, k, k), yellow, rb},
-		{vec3(-k, -k, k), red, rt},
-		// 裏
-		{vec3(k, k, -k), cyan, lb},
-		{vec3(k, -k, -k), blue, lt},
-		{vec3(-k, k, -k), green, rb},
-		{vec3(-k, -k, -k), black, rt},
-		// 上
-		{vec3(-k, k, -k), green, lb},
-		{vec3(-k, k, k), yellow, lt},
-		{vec3(k, k, -k), cyan, rb},
-		{vec3(k, k, k), white, rt},
-		// 底
-		{vec3(-k, -k, k), red, lb},
-		{vec3(-k, -k, -k), black, lt},
-		{vec3(k, -k, k), magenta, rb},
-		{vec3(k, -k, -k), blue, rt},
-	};
-
-	uint32_t indices[] = {
-		0, 2, 1, 1, 2, 3, // 正面
-		4, 6, 5, 5, 6, 7, // 右
-		8, 10, 9, 9, 10, 11, // 左
-		12, 14, 13, 13, 14, 15, // 裏
-		16, 18, 17, 17, 18, 19, // 上
-		20, 22, 21, 21, 22, 23, // 底
-	};
-
-	m_vertexBuffer = createBuffer(sizeof(vertices), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-	m_indexBuffer = createBuffer(sizeof(indices), VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
-
-	// 頂点データ書き込み
-	{
-		void* p = nullptr;
-		VkResult result = vkMapMemory(m_device, m_vertexBuffer.memory, 0, VK_WHOLE_SIZE, 0, &p);
-		checkResult(result);
-		memcpy(p, vertices, sizeof(vertices));
-		vkUnmapMemory(m_device, m_vertexBuffer.memory);
-	}
-
-	// インデックスデータ書き込み
-	{
-		void* p = nullptr;
-		VkResult result = vkMapMemory(m_device, m_indexBuffer.memory, 0, VK_WHOLE_SIZE, 0, &p);
-		checkResult(result);
-		memcpy(p, indices, sizeof(indices));
-		vkUnmapMemory(m_device, m_indexBuffer.memory);
-	}
-
-	m_indexCount = _countof(indices);
-}
-
 void ModelApp::prepareUniformBuffers()
 {
 	// TODO:なぜ定数バッファがダブルバッファにひとつずつ必要なのか？
@@ -497,15 +445,17 @@ void ModelApp::prepareDescriptorSetLayout()
 
 void ModelApp::prepareDescriptorPool()
 {
+	uint32_t maxDescriptorCount = uint32_t(m_swapchainImages.size() * m_model.meshes.size());
+
 	std::array<VkDescriptorPoolSize, 2> descPoolSize;
-	descPoolSize[0].descriptorCount = uint32_t(m_uniformBuffers.size());
+	descPoolSize[0].descriptorCount = maxDescriptorCount; // TODO:本ではなぜかここに100を入れている
 	descPoolSize[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	descPoolSize[1].descriptorCount = uint32_t(m_uniformBuffers.size());
+	descPoolSize[1].descriptorCount = maxDescriptorCount; // TODO:本ではなぜかここに100を入れている
 	descPoolSize[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 
 	VkDescriptorPoolCreateInfo ci{};
 	ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-	ci.maxSets = uint32_t(m_uniformBuffers.size());
+	ci.maxSets = maxDescriptorCount;
 	ci.poolSizeCount = uint32_t(descPoolSize.size());
 	ci.pPoolSizes = descPoolSize.data();
 	VkResult result = vkCreateDescriptorPool(m_device, &ci, nullptr, &m_descriptorPool);
@@ -521,49 +471,53 @@ void ModelApp::prepareDescriptorSet()
 		layouts.push_back(m_descriptorSetLayout);
 	}
 
-	VkDescriptorSetAllocateInfo ai{};
-	ai.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	ai.descriptorPool = m_descriptorPool;
-	ai.descriptorSetCount = uint32_t(m_uniformBuffers.size());
-	ai.pSetLayouts = layouts.data();
-
-	m_descriptorSet.resize(m_uniformBuffers.size());
-	VkResult result = vkAllocateDescriptorSets(m_device, &ai, m_descriptorSet.data());
-	checkResult(result);
-
-	// ディスクリプタセットへ書き込み
-	for (size_t i = 0; i < m_uniformBuffers.size(); ++i)
+	for (ModelMesh& mesh : m_model.meshes)
 	{
-		VkDescriptorBufferInfo descUBO{};
-		descUBO.buffer = m_uniformBuffers[i].buffer;
-		descUBO.offset = 0;
-		descUBO.range = VK_WHOLE_SIZE;
+		VkDescriptorSetAllocateInfo ai{};
+		ai.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+		ai.descriptorPool = m_descriptorPool;
+		ai.descriptorSetCount = uint32_t(m_uniformBuffers.size());
+		ai.pSetLayouts = layouts.data();
 
-		VkDescriptorImageInfo descImage{};
-		descImage.imageView = m_texture.view;
-		descImage.sampler = m_sampler;
-		descImage.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		mesh.descriptorSet.resize(m_uniformBuffers.size());
+		VkResult result = vkAllocateDescriptorSets(m_device, &ai, mesh.descriptorSet.data());
+		checkResult(result);
 
-		VkWriteDescriptorSet ubo{};
-		ubo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		ubo.dstBinding = 0;
-		ubo.descriptorCount = 1;
-		ubo.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		ubo.pBufferInfo = &descUBO;
-		ubo.dstSet = m_descriptorSet[i];
+		// ディスクリプタセットへ書き込み
+		const Material& material = m_model.materials[mesh.materialIndex];
+		for (size_t i = 0; i < m_uniformBuffers.size(); ++i)
+		{
+			VkDescriptorBufferInfo descUBO{};
+			descUBO.buffer = m_uniformBuffers[i].buffer;
+			descUBO.offset = 0;
+			descUBO.range = VK_WHOLE_SIZE;
 
-		VkWriteDescriptorSet tex{};
-		tex.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		tex.dstBinding = 0;
-		tex.descriptorCount = 1;
-		tex.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		tex.pImageInfo = &descImage;
-		tex.dstSet = m_descriptorSet[i];
+			VkDescriptorImageInfo descImage{};
+			descImage.imageView = material.texture.view;
+			descImage.sampler = m_sampler;
+			descImage.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-		std::vector<VkWriteDescriptorSet> writeSets = {
-			ubo, tex
-		};
-		vkUpdateDescriptorSets(m_device, uint32_t(writeSets.size()), writeSets.data(), 0, nullptr);
+			VkWriteDescriptorSet ubo{};
+			ubo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			ubo.dstBinding = 0;
+			ubo.descriptorCount = 1;
+			ubo.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			ubo.pBufferInfo = &descUBO;
+			ubo.dstSet = mesh.descriptorSet[i];
+
+			VkWriteDescriptorSet tex{};
+			tex.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			tex.dstBinding = 0;
+			tex.descriptorCount = 1;
+			tex.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			tex.pImageInfo = &descImage;
+			tex.dstSet = mesh.descriptorSet[i];
+
+			std::vector<VkWriteDescriptorSet> writeSets = {
+				ubo, tex
+			};
+			vkUpdateDescriptorSets(m_device, uint32_t(writeSets.size()), writeSets.data(), 0, nullptr);
+		}
 	}
 }
 
@@ -755,123 +709,6 @@ ModelApp::TextureObject ModelApp::createTextureFromMemory(const std::vector<char
 	vkFreeMemory(m_device, stagingBuffer.memory, nullptr);
 	vkDestroyBuffer(m_device, stagingBuffer.buffer, nullptr);
 
-	return texture;
-}
-
-ModelApp::TextureObject ModelApp::createTexture(const char* fileName)
-{
-	BufferObject stagingBuffer;
-	TextureObject texture{};
-
-	// 画像データをstbライブラリでロード
-	int width, height, channels;
-	stbi_uc* pImage = stbi_load(fileName, &width, &height, &channels, 0);
-	VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
-
-	{
-		// テクスチャのVkImageを生成
-		VkImageCreateInfo ci{};
-		ci.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-		ci.extent = { uint32_t(width), uint32_t(height), 1 };
-		ci.format = format;
-		ci.imageType = VK_IMAGE_TYPE_2D;
-		ci.mipLevels = 1;
-		ci.samples = VK_SAMPLE_COUNT_1_BIT;
-		ci.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-		ci.arrayLayers = 1;
-		VkResult result = vkCreateImage(m_device, &ci, nullptr, &texture.image);
-		checkResult(result);
-
-		// メモリ量の算出
-		VkMemoryRequirements reqs;
-		vkGetImageMemoryRequirements(m_device, texture.image, &reqs);
-		VkMemoryAllocateInfo info{};
-		info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		info.allocationSize = reqs.size;
-		// メモリタイプの判定
-		info.memoryTypeIndex = getMemoryTypeIndex(reqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-		// メモリの確保
-		result = vkAllocateMemory(m_device, &info, nullptr, &texture.memory);
-		checkResult(result);
-		// メモリのバインド
-		result = vkBindImageMemory(m_device, texture.image, texture.memory, 0);
-		checkResult(result);
-	}
-
-	{
-		uint32_t imageSize = width * height * sizeof(uint32_t);
-		// ステージングバッファを用意
-		stagingBuffer = createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
-
-		// ステージングバッファに画像データを書き込み
-		void* p = nullptr;
-		VkResult result = vkMapMemory(m_device, stagingBuffer.memory, 0, VK_WHOLE_SIZE, 0, &p);
-		checkResult(result);
-		memcpy(p, pImage, imageSize);
-		vkUnmapMemory(m_device, stagingBuffer.memory);
-	}
-
-	VkCommandBuffer command;
-	{
-		VkCommandBufferAllocateInfo ai{};
-		ai.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		ai.commandBufferCount = 1;
-		ai.commandPool = m_commandPool;
-		ai.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		VkResult result = vkAllocateCommandBuffers(m_device, &ai, &command);
-		checkResult(result);
-	}
-
-	VkCommandBufferBeginInfo commandBI{};
-	commandBI.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	VkResult result = vkBeginCommandBuffer(command, &commandBI);
-	checkResult(result);
-
-	setImageMemoryBarrier(command, texture.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-
-	VkBufferImageCopy copyRegion{};
-	copyRegion.imageExtent = { uint32_t(width), uint32_t(height), 1 };
-	copyRegion.imageSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
-	vkCmdCopyBufferToImage(command, stagingBuffer.buffer, texture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
-
-	setImageMemoryBarrier(command, texture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
-	result = vkEndCommandBuffer(command);
-	checkResult(result);
-
-	// コマンドバッファ実行
-	VkSubmitInfo submitInfo{};
-	VkPipelineStageFlags waitStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = &command;
-	vkQueueSubmit(m_deviceQueue, 1, &submitInfo, VK_NULL_HANDLE);
-	{
-		// テクスチャ参照用のビューを作成
-		VkImageViewCreateInfo ci{};
-		ci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		ci.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		ci.image = texture.image;
-		ci.format = format;
-		ci.components = {
-			VK_COMPONENT_SWIZZLE_R,
-			VK_COMPONENT_SWIZZLE_G,
-			VK_COMPONENT_SWIZZLE_B,
-			VK_COMPONENT_SWIZZLE_A,
-		};
-		ci.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
-		VkResult result = vkCreateImageView(m_device, &ci, nullptr, &texture.view);
-		checkResult(result);
-	}
-
-	vkDeviceWaitIdle(m_device);
-	vkFreeCommandBuffers(m_device, m_commandPool, uint32_t(m_commands.size()), m_commands.data());
-
-	// ステージングバッファ解放
-	vkFreeMemory(m_device, stagingBuffer.memory, nullptr);
-	vkDestroyBuffer(m_device, stagingBuffer.buffer, nullptr);
-
-	stbi_image_free(pImage);
 	return texture;
 }
 

@@ -63,6 +63,8 @@ private:
 		uint32_t indexCount;
 
 		int materialIndex;
+
+		std::vector<VkDescriptorSet> descriptorSet;
 	};
 
 	struct Material
@@ -80,7 +82,6 @@ private:
 
 	void makeModelGeometry(const Microsoft::glTF::Document& doc, std::shared_ptr<Microsoft::glTF::GLTFResourceReader> reader);
 	void makeModelMaterial(const Microsoft::glTF::Document& doc, std::shared_ptr<Microsoft::glTF::GLTFResourceReader> reader);
-	void makeCubeGeometry();
 
 	void prepareUniformBuffers();
 	void prepareDescriptorSetLayout();
@@ -91,15 +92,11 @@ private:
 	VkPipelineShaderStageCreateInfo loadShaderModule(const char* fileName, VkShaderStageFlagBits stage);
 
 	VkSampler createSampler();
-	TextureObject createTexture(const char* fileName);
 	TextureObject createTextureFromMemory(const std::vector<char>& imageData);
 
 	void setImageMemoryBarrier(VkCommandBuffer command, VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout);
 
-	BufferObject m_vertexBuffer;
-	BufferObject m_indexBuffer;
 	std::vector<BufferObject> m_uniformBuffers;
-	TextureObject m_texture;
 	VkSampler m_sampler = VK_NULL_HANDLE;
 
 	Model m_model;
@@ -107,10 +104,8 @@ private:
 	VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
 	VkPipeline m_pipelineOpaque = VK_NULL_HANDLE;
 	VkPipeline m_pipelineAlpha = VK_NULL_HANDLE;
-	uint32_t m_indexCount = 0;
 
 	VkDescriptorSetLayout m_descriptorSetLayout = VK_NULL_HANDLE;
 	VkDescriptorPool m_descriptorPool = VK_NULL_HANDLE;
-	std::vector<VkDescriptorSet> m_descriptorSet;
 };
 
