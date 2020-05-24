@@ -8,6 +8,11 @@ layout(binding = 1) uniform sampler2D diffuseMap;
 
 void main()
 {
-	outColor = inColor * texture(diffuseMap, inUV);
+	vec4 color = inColor * texture(diffuseMap, inUV);
+	if (color.a < 0.5)
+	{
+		discard;
+	}
+	outColor = color;
 }
 
