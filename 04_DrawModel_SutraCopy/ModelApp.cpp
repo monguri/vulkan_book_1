@@ -263,9 +263,9 @@ void ModelApp::makeCommand(VkCommandBuffer command)
 {
 	// ユニフォームバッファの中身を更新する
 	ShaderParameters shaderParam{};
-	shaderParam.mtxWorld = rotate(identity<glm::mat4>(), radians(45.0f), vec3(0, 1, 0));
-	shaderParam.mtxView = lookAtRH(vec3(0.0f, 3.0f, 5.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
-	shaderParam.mtxProj = perspective(radians(60.0f), 640.0f / 480.0f, 0.01f, 100.0f);
+	shaderParam.mtxWorld = identity<glm::mat4>();
+	shaderParam.mtxView = lookAtRH(vec3(0.0f, 1.5f, -1.0f), vec3(0.0f, 1.25f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+	shaderParam.mtxProj = perspective(radians(45.0f), 640.0f / 480.0f, 0.01f, 100.0f);
 
 	{
 		const VkDeviceMemory& memory = m_uniformBuffers[m_imageIndex].memory;
