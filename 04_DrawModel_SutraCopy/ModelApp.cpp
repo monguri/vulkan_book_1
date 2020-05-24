@@ -41,15 +41,15 @@ void ModelApp::prepare()
 	// í∏ì_ÇÃì¸óÕÇÃê›íË
 	VkVertexInputBindingDescription inputBinding{
 		0, // binding
-		sizeof(CubeVertex), // stride
+		sizeof(Vertex), // stride
 		VK_VERTEX_INPUT_RATE_VERTEX // inputRate
 	};
 
 	std::array<VkVertexInputAttributeDescription, 3> inputAttribs{
 		{
-			{0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(CubeVertex, pos)},
-			{1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(CubeVertex, color)},
-			{2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(CubeVertex, uv)},
+			{0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, pos)},
+			{1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, normal)},
+			{2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, uv)},
 		}
 	};
 
