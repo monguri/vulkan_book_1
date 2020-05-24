@@ -337,7 +337,7 @@ void ModelApp::makeModelGeometry(const Microsoft::glTF::Document& doc, std::shar
 			const Accessor& accNrm = doc.accessors.Get(idNrm);
 
 			// UV情報アクセサの取得
-			const std::string& idUV = meshPrimitive.GetAttributeAccessorId(ACCESSOR_NORMAL);
+			const std::string& idUV = meshPrimitive.GetAttributeAccessorId(ACCESSOR_TEXCOORD_0);
 			const Accessor& accUV = doc.accessors.Get(idUV);
 
 			// インデックス情報アクセサの取得
