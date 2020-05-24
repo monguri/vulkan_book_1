@@ -65,13 +65,21 @@ private:
 		int materialIndex;
 	};
 
+	struct Material
+	{
+		TextureObject texture;
+		Microsoft::glTF::AlphaMode alphaMode;
+	};
+
 	struct Model
 	{
 		std::vector<ModelMesh> meshes;
+		std::vector<Material> materials;
 	};
 
 
 	void makeModelGeometry(const Microsoft::glTF::Document& doc, std::shared_ptr<Microsoft::glTF::GLTFResourceReader> reader);
+	void makeModelMaterial(const Microsoft::glTF::Document& doc, std::shared_ptr<Microsoft::glTF::GLTFResourceReader> reader);
 	void makeCubeGeometry();
 
 	void prepareUniformBuffers();
@@ -84,6 +92,8 @@ private:
 
 	VkSampler createSampler();
 	TextureObject createTexture(const char* fileName);
+	TextureObject createTextureFromMemory(const std::vector<char>& imageData);
+
 	void setImageMemoryBarrier(VkCommandBuffer command, VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout);
 
 	BufferObject m_vertexBuffer;
